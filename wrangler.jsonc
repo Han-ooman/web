@@ -1,0 +1,10 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sambasku-web",
+  "compatibility_date": "2025-02-24",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "./app/worker.ts",
+  "assets": {},
+  // VITE_* di-inline saat build dari .env.[mode] (lihat env.ts), tidak lewat
+  // vars runtime. Staging deploy memakai override --name sambasku-web-staging.
+}
