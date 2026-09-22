@@ -155,7 +155,6 @@ export default function WordsPage() {
                   gap="xs"
                   pt="xs"
                   pb={4}
-                  bd="1px solid var(--mantine-color-default-border)"
                   style={{
                     position: 'sticky',
                     top: 60,
