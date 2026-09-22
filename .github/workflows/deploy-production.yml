@@ -1,0 +1,80 @@
+name: Deploy Web (Production)
+
+# Deploy murni lewat CI/CD (GitHub Actions → wrangler deploy), BUKAN
+# Cloudflare Pages. Web pakai Workers karena SSR (lihat docs/web/web-base-stack.md).
+#
+# Setup sekali di Cloudflare (manual):
+#   1. Worker `sambasku-web-prod` dibuat otomatis oleh deploy pertama.
+#   2. Attach custom domain: Workers & Pages → sambasku-web-prod → Settings
+#      → Domains & Routes → add `sambasku.com` (+ `www.sambasku.com` redirect).
+#   3. API produksi harus ter-route di `https://sambasku.com/api/v1`
+#      (Worker sambasku-api), dan origin `https://sambasku.com` harus masuk
+#      CORS_ALLOWED_ORIGINS api/wrangler.toml [vars].
+#
+# Secrets repo (Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN   - izin "Workers Scripts: Edit" (BEDA kebutuhan
+#                            dengan admin yang pakai "Cloudflare Pages: Edit";
+#                            satu token boleh dua-duanya asal scoped begitu)
+#   CLOUDFLARE_ACCOUNT_ID  - Account ID Cloudflare
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-web-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      # Web belum punya script test; react-router build tidak menjalankan
+      # tsc, jadi typecheck eksplisit di sini.
+      - name: Typecheck
+        run: pnpm typecheck
+
+      # `pnpm build` = react-router build (production adalah mode default,
+      # tidak perlu --mode). .env.production TIDAK ter-track - nilai build
+      # di-inject langsung di sini; Vite memberi process env prioritas
+      # tertinggi. Nilai VITE_* memang publik (ter-embed di bundle JS).
+      - name: Build (production)
+        run: pnpm build
+        env:
+          VITE_API_BASE_URL: https://sambasku.com/api/v1
+          VITE_APP_URL: https://sambasku.com
+          VITE_APP_NAME: SambasKu
+
+      # --name sambasku-web-prod: Worker produksi terpisah dari staging
+      # (sambasku-web-staging) maupun default (sambasku-web).
+      - name: Deploy ke Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --config dist/server/wrangler.json --name sambasku-web-prod
