@@ -79,3 +79,10 @@ export async function getWordDetail(id: string, signal?: AbortSignal): Promise<W
   const res = await apiClient<WordDetail>(`/words/${encodeURIComponent(id)}`, { signal });
   return res.data;
 }
+
+export async function getWordByLemma(lemma: string, signal?: AbortSignal): Promise<WordDetail> {
+  const res = await apiClient<WordDetail>(`/words/lemma/${encodeURIComponent(lemma)}`, {
+    signal,
+  });
+  return res.data;
+}

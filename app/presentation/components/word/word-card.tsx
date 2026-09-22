@@ -8,7 +8,7 @@ export function WordCard({ word }: { word: WordSummary }) {
   return (
     <Card
       component={Link}
-      to={`/words/${word.id}`}
+      to={`/words/${encodeURIComponent(word.lemma)}`}
       withBorder
       padding="sm"
       radius="md"

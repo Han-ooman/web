@@ -27,10 +27,12 @@ import {
   Sparkles,
   Volume2,
 } from 'lucide-react';
-import type { Route } from './+types/words.$id';
-import { getWordDetail } from '@/application/use-cases/word.use-case';
+import type { Route } from './+types/words.$lemma';
+import { redirect } from 'react-router';
+import { getWordByLemma, getWordDetail } from '@/application/use-cases/word.use-case';
 import { buildMetaTags, buildWordJsonLd } from '@/application/utils/seo';
 import { env } from '@/infrastructure/config/env';
+import { displayImageUrl } from '@/presentation/utils/display-image-url';
 import { WordTypeBadge } from '@/presentation/components/word/word-type-badge';
 import { WordAudioPlayer } from '@/presentation/components/word/pronunciation-player';
 import { formatWordClass } from '@/application/utils/formatters';
@@ -48,27 +50,37 @@ export function meta({ data }: Route.MetaArgs) {
   const firstMeaning = word.meanings[0];
   const definition =
     firstMeaning?.definition ?? `Pelajari arti kata ${word.lemma} dalam bahasa Sambas.`;
-  const primaryImage = word.images.find((img) => img.is_primary)?.url ?? word.images[0]?.url;
+  const rawImage = word.images.find((img) => img.is_primary)?.url ?? word.images[0]?.url;
+  const primaryImage = displayImageUrl(rawImage, { width: 1200 }) ?? rawImage;
 
   return buildMetaTags({
     title: `${word.lemma} - Arti Kata Bahasa Sambas`,
     description: `${word.lemma}: ${definition}`,
-    path: `/words/${word.id}`,
+    path: `/words/${encodeURIComponent(word.lemma)}`,
     image: primaryImage,
     type: 'article',
   });
 }
 
+// ULID Crockford base32 - 26 karakter. URL lama /words/<ulid> masih
+// beredar (backlink/search engine) → 301 permanen ke /words/<lemma>.
+const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+
 export async function loader({ params, request }: Route.LoaderArgs) {
-  const { id } = params;
-  if (!id) {
-    throw new Response('ID kata tidak valid', { status: 400 });
+  const { lemma } = params;
+  if (!lemma) {
+    throw new Response('Lemma kata tidak valid', { status: 400 });
   }
 
   try {
-    const word = await getWordDetail(id, request.signal);
+    if (ULID_RE.test(lemma)) {
+      const word = await getWordDetail(lemma, request.signal);
+      throw redirect(`/words/${encodeURIComponent(word.lemma)}`, 301);
+    }
+    const word = await getWordByLemma(lemma, request.signal);
     return { word };
   } catch (error) {
+    if (error instanceof Response) throw error; // redirect 301 lolos
     const status = (error as { statusCode?: number }).statusCode ?? 404;
     throw new Response('Kata tidak ditemukan', { status });
   }
@@ -298,7 +310,7 @@ export default function WordDetailPage() {
                 <Badge
                   key={rel.word_id}
                   component={Link}
-                  to={`/words/${rel.word_id}`}
+                  to={`/words/${encodeURIComponent(rel.lemma)}`}
                   size="lg"
                   variant="outline"
                 >

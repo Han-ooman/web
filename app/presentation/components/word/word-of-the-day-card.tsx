@@ -49,7 +49,7 @@ export function WordOfTheDayCard({ wordOfDay }: { wordOfDay: WordOfTheDay }) {
           <Group gap="sm" align="baseline" wrap="wrap">
             <Anchor
               component={Link}
-              to={`/words/${word.id}`}
+              to={`/words/${encodeURIComponent(word.lemma)}`}
               underline="never"
               c="var(--mantine-color-text)"
             >
@@ -81,7 +81,7 @@ export function WordOfTheDayCard({ wordOfDay }: { wordOfDay: WordOfTheDay }) {
 
         <Button
           component={Link}
-          to={`/words/${word.id}`}
+          to={`/words/${encodeURIComponent(word.lemma)}`}
           variant="light"
           leftSection={<BookOpen size={16} />}
           rightSection={<ArrowRight size={16} />}

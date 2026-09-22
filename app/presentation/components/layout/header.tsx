@@ -7,6 +7,7 @@ import {
   Container,
   Drawer,
   Group,
+  Image,
   Stack,
 } from '@mantine/core';
 import { Search, List } from 'lucide-react';
@@ -65,6 +66,25 @@ export function Header() {
         </Group>
 
         <Group gap="xs" wrap="nowrap">
+          {/* CTA Play Store - disembunyikan di layar sangat kecil biar tidak
+              berdesakan dengan toggle tema + burger (footer kandidat pengganti). */}
+          <Anchor
+            href="https://play.google.com/store/apps/details?id=com.iamutaki.sambasku"
+            target="_blank"
+            rel="noopener noreferrer"
+            underline="never"
+            visibleFrom="xs"
+            aria-label="Dapatkan aplikasi SambasKu di Google Play"
+          >
+            <Image
+              src="/google_play.webp"
+              alt="Dapatkan di Google Play"
+              h={36}
+              w="auto"
+              fit="contain"
+              decoding="async"
+            />
+          </Anchor>
           <ThemeToggle />
           {/* Menu mobile */}
           <Box hiddenFrom="xs">
