@@ -7,6 +7,11 @@ export interface SeoMetaProps {
   path?: string;
   image?: string;
   type?: 'website' | 'article';
+  /**
+   * Halaman hasil pencarian/thin-content: noindex di SEMUA environment
+   * (panduan search engine untuk search results page).
+   */
+  noindexAlways?: boolean;
 }
 
 export function buildMetaTags({
@@ -15,26 +20,35 @@ export function buildMetaTags({
   path = '',
   image,
   type = 'website',
+  noindexAlways = false,
 }: SeoMetaProps) {
   const url = `${env.appUrl}${path.startsWith('/') ? path : `/${path}`}`;
+  const canonical = `${env.appUrl}${path.split('?')[0] || '/'}`;
   const siteName = env.appName;
   const fullTitle = title.includes(siteName) ? title : `${title} | ${siteName}`;
+  // Logo resmi (mobile/logo_prod.png) jadi fallback og:image
+  const finalImage = image ?? `${env.appUrl}/logo.png`;
+  const noindex = noindexAlways || !env.isProd;
 
   return [
     { title: fullTitle },
     { name: 'description', content: description },
+    // Indexing hanya di produksi; staging/dev dan halaman pencarian noindex.
+    ...(noindex
+      ? [{ name: 'robots', content: 'noindex, nofollow' }]
+      : [{ tagName: 'link', rel: 'canonical', href: canonical }]),
     // Open Graph
     { property: 'og:title', content: fullTitle },
     { property: 'og:description', content: description },
     { property: 'og:url', content: url },
     { property: 'og:site_name', content: siteName },
     { property: 'og:type', content: type },
-    ...(image ? [{ property: 'og:image', content: image }] : []),
+    { property: 'og:image', content: finalImage },
     // Twitter Card
-    { name: 'twitter:card', content: image ? 'summary_large_image' : 'summary' },
+    { name: 'twitter:card', content: 'summary' },
     { name: 'twitter:title', content: fullTitle },
     { name: 'twitter:description', content: description },
-    ...(image ? [{ name: 'twitter:image', content: image }] : []),
+    { name: 'twitter:image', content: finalImage },
   ];
 }
 

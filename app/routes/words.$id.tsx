@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import { useLoaderData, Link } from 'react-router';
+import { useLoaderData, useNavigation, Link } from 'react-router';
 import {
   Badge,
   Blockquote,
   Box,
   Button,
   Card,
+  Code,
   Container,
   Divider,
   Group,
   Paper,
+  Skeleton,
   Stack,
   Text,
   ThemeIcon,
@@ -28,8 +30,9 @@ import {
 import type { Route } from './+types/words.$id';
 import { getWordDetail } from '@/application/use-cases/word.use-case';
 import { buildMetaTags, buildWordJsonLd } from '@/application/utils/seo';
+import { env } from '@/infrastructure/config/env';
 import { WordTypeBadge } from '@/presentation/components/word/word-type-badge';
-import { PronunciationPlayer } from '@/presentation/components/word/pronunciation-player';
+import { WordAudioPlayer } from '@/presentation/components/word/pronunciation-player';
 import { formatWordClass } from '@/application/utils/formatters';
 
 export function meta({ data }: Route.MetaArgs) {
@@ -73,7 +76,28 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
 export default function WordDetailPage() {
   const { word } = useLoaderData<typeof loader>();
+  const navigation = useNavigation();
   const [copied, setCopied] = useState(false);
+
+  // Saat pindah ke kata terkait (route sama, :id beda) loader berjalan -
+  // tampilkan skeleton agar data kata lama tidak tampil sesaat.
+  const isLoadingRelated =
+    navigation.state === 'loading' &&
+    navigation.location.pathname !== '/words' &&
+    navigation.location.pathname.startsWith('/words/');
+
+  if (isLoadingRelated) {
+    return (
+      <Container size="sm" py="xl">
+        <Stack gap="lg">
+          <Skeleton height={44} width="45%" radius="md" />
+          <Skeleton height={18} width="70%" radius="sm" />
+          <Skeleton height={140} radius="md" />
+          <Skeleton height={140} radius="md" />
+        </Stack>
+      </Container>
+    );
+  }
 
   const jsonLd = buildWordJsonLd(word);
 
@@ -87,14 +111,17 @@ export default function WordDetailPage() {
 
   return (
     <Container size="sm" py="xl">
-      {/* Inject Schema.org JSON-LD for Search Engines.
-          ponytail: escape "<" mencegah tag </script> nyelinap dari data API. */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
-        }}
-      />
+      {/* Inject Schema.org JSON-LD untuk search engine - HANYA produksi
+          (staging noindex). ponytail: escape "<" mencegah tag </script>
+          nyelinap dari data API. */}
+      {env.isProd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+          }}
+        />
+      )}
 
       <Stack gap="lg">
         {/* Navigation & Action Bar */}
@@ -140,7 +167,7 @@ export default function WordDetailPage() {
               <WordTypeBadge type={word.word_type} />
             </Group>
 
-            {/* Pronunciations / Audio */}
+            {/* Notasi IPA (teks) + audio multi-take dari word_audios */}
             {word.pronunciations.length > 0 && (
               <Group gap="sm" wrap="wrap">
                 <Group gap={4} wrap="nowrap">
@@ -150,9 +177,18 @@ export default function WordDetailPage() {
                   </Text>
                 </Group>
                 {word.pronunciations.map((p) => (
-                  <PronunciationPlayer key={p.id} pronunciation={p} />
+                  <Code key={p.id}>
+                    {p.notation} {p.value}
+                  </Code>
                 ))}
               </Group>
+            )}
+            {(word.audios ?? []).length > 0 && (
+              <Stack gap={6}>
+                {(word.audios ?? []).map((a) => (
+                  <WordAudioPlayer key={a.id} audio={a} />
+                ))}
+              </Stack>
             )}
           </Stack>
 
@@ -229,6 +265,13 @@ export default function WordDetailPage() {
                             <Text size="xs" c="dimmed" pl="md">
                               Artinya: &quot;{ex.target_sentence}&quot;
                             </Text>
+                          )}
+                          {(ex.audios ?? []).length > 0 && (
+                            <Stack gap={4} pl="md">
+                              {(ex.audios ?? []).map((a) => (
+                                <WordAudioPlayer key={a.id} audio={a} />
+                              ))}
+                            </Stack>
                           )}
                         </Stack>
                       ))}

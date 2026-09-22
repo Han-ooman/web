@@ -1,4 +1,4 @@
-import { useLoaderData, useSearchParams, Link } from 'react-router';
+import { useLoaderData, useNavigation, useSearchParams, Link } from 'react-router';
 import {
   ActionIcon,
   Box,
@@ -17,6 +17,7 @@ import type { Route } from './+types/words';
 import { listWordsAtoZ } from '../application/use-cases/word.use-case';
 import { buildMetaTags } from '../application/utils/seo';
 import { WordCard } from '../presentation/components/word/word-card';
+import { WordListSkeleton } from '../presentation/components/word/word-card-skeleton';
 import type { WordSummary } from '../domain/entities/word.entity';
 
 export function meta({ data }: Route.MetaArgs) {
@@ -62,6 +63,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 export default function WordsPage() {
   const { q, wordType, items, meta } = useLoaderData<typeof loader>();
   const [, setSearchParams] = useSearchParams();
+  const navigation = useNavigation();
+  const isLoading = navigation.state === 'loading' && navigation.location.pathname === '/words';
 
   const handleFilterSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -142,7 +145,9 @@ export default function WordsPage() {
         </Stack>
 
         {/* Items Section */}
-        {items.length > 0 ? (
+        {isLoading && items.length > 0 ? (
+          <WordListSkeleton count={6} />
+        ) : items.length > 0 ? (
           <Stack gap="xl">
             {groupKeys.map((letter) => (
               <Stack key={letter} gap="sm">

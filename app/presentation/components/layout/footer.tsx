@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
-import { Anchor, Container, Divider, Group, Stack, Text } from '@mantine/core';
-import { Heart, ExternalLink, BookOpen } from 'lucide-react';
+import { Anchor, Container, Divider, Group, Image, Stack, Text } from '@mantine/core';
+import { Heart, ExternalLink } from 'lucide-react';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -9,7 +9,7 @@ export function Footer() {
     <Container size="md" py="md">
       <Group justify="space-between" gap="md">
         <Group gap="xs" justify="center">
-          <BookOpen size={16} />
+          <Image src="/logo.png" alt="" h={20} w={20} fit="contain" />
           <Text size="sm" c="dimmed">
             <Text span fw={600} c="var(--mantine-color-text)">
               SambasKu

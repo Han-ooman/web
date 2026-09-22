@@ -7,10 +7,10 @@ import {
   Container,
   Drawer,
   Group,
+  Image,
   Stack,
-  ThemeIcon,
 } from '@mantine/core';
-import { BookA, Search, List, Home } from 'lucide-react';
+import { Search, List, Home } from 'lucide-react';
 import { ThemeToggle } from '../theme-toggle';
 
 const NAV_ITEMS = [
@@ -45,9 +45,7 @@ export function Header() {
             c="var(--mantine-color-text)"
           >
             <Group gap="xs" wrap="nowrap">
-              <ThemeIcon variant="filled" size="md" radius="sm">
-                <BookA size={18} />
-              </ThemeIcon>
+              <Image src="/logo.png" alt="Logo SambasKu" h={32} w={32} fit="contain" />
               Sambasku
             </Group>
           </Anchor>
