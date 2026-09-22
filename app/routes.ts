@@ -7,4 +7,5 @@ export default [
   route('words/:id', 'routes/words.$id.tsx'),
   route('reset-password', 'routes/reset-password.tsx'),
   route('sitemap.xml', 'routes/sitemap[.]xml.ts'),
+  route('robots.txt', 'routes/robots[.]txt.ts'),
 ] satisfies RouteConfig;

@@ -1,40 +1,29 @@
-import { useState } from 'react';
-import { ActionIcon, Code, Group } from '@mantine/core';
-import { Volume2 } from 'lucide-react';
-import type { WordPronunciation } from '@/domain/entities/word.entity';
+import { Badge, Group, Text } from '@mantine/core';
+import type { WordAudio } from '@/domain/entities/word.entity';
 
-export function PronunciationPlayer({ pronunciation }: { pronunciation: WordPronunciation }) {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const isAudioUrl =
-    pronunciation.value.startsWith('http://') || pronunciation.value.startsWith('https://');
-
-  const playAudio = () => {
-    if (!isAudioUrl) return;
-    try {
-      const audio = new Audio(pronunciation.value);
-      setIsPlaying(true);
-      audio.onended = () => setIsPlaying(false);
-      audio.onerror = () => setIsPlaying(false);
-      audio.play().catch(() => setIsPlaying(false));
-    } catch {
-      setIsPlaying(false);
-    }
-  };
-
+/** Pemutar satu take `word_audios` — URL file, bukan teks notasi IPA. */
+export function WordAudioPlayer({ audio }: { audio: WordAudio }) {
+  const speaker = audio.speaker_name?.trim();
   return (
-    <Group gap={6} wrap="nowrap">
-      <Code>{pronunciation.notation}</Code>
-      {isAudioUrl && (
-        <ActionIcon
-          variant="subtle"
-          size="sm"
-          loading={isPlaying}
-          onClick={playAudio}
-          aria-label={`Putar audio ${pronunciation.notation}`}
-        >
-          {!isPlaying && <Volume2 size={14} />}
-        </ActionIcon>
-      )}
+    <Group gap={8} wrap="nowrap" align="center">
+      <audio
+        controls
+        preload="none"
+        src={audio.url}
+        style={{ height: 32, maxWidth: '100%', minWidth: 180 }}
+      >
+        <a href={audio.url}>Unduh audio</a>
+      </audio>
+      {speaker ? (
+        <Text size="xs" c="dimmed">
+          {speaker}
+        </Text>
+      ) : null}
+      {audio.is_primary ? (
+        <Badge size="xs" variant="light">
+          Utama
+        </Badge>
+      ) : null}
     </Group>
   );
 }

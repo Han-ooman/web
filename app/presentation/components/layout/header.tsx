@@ -8,13 +8,13 @@ import {
   Drawer,
   Group,
   Stack,
-  ThemeIcon,
 } from '@mantine/core';
-import { BookA, Search, List, Home } from 'lucide-react';
+import { Search, List } from 'lucide-react';
 import { ThemeToggle } from '../theme-toggle';
+import { Logo } from './logo';
 
+// Logo di appbar = tombol Beranda (link ke /)
 const NAV_ITEMS = [
-  { to: '/', label: 'Beranda', icon: Home },
   { to: '/words', label: 'Daftar Kata A-Z', icon: List },
   { to: '/search', label: 'Cari', icon: Search },
 ];
@@ -24,8 +24,7 @@ export function Header() {
   const navigate = useNavigate();
   const [menuOpened, setMenuOpened] = useState(false);
 
-  const isActive = (path: string) =>
-    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
+  const isActive = (path: string) => location.pathname.startsWith(path);
 
   const goTo = (to: string) => {
     setMenuOpened(false);
@@ -36,20 +35,9 @@ export function Header() {
     <Container size="md" h={60} px="md">
       <Group h={60} justify="space-between" wrap="nowrap">
         <Group gap="lg" wrap="nowrap">
-          <Anchor
-            component={Link}
-            to="/"
-            underline="never"
-            fw={700}
-            size="lg"
-            c="var(--mantine-color-text)"
-          >
-            <Group gap="xs" wrap="nowrap">
-              <ThemeIcon variant="filled" size="md" radius="sm">
-                <BookA size={18} />
-              </ThemeIcon>
-              Sambasku
-            </Group>
+          {/* Teks "SambasKu" cukup di SEO (title/og:site_name) dan alt gambar */}
+          <Anchor component={Link} to="/" underline="never" aria-label="SambasKu">
+            <Logo h={40} eager />
           </Anchor>
 
           {/* Navigasi desktop */}

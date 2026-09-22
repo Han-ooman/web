@@ -1,14 +1,16 @@
-name: Deploy Web (Staging)
+name: Deploy Web (Production)
 
 # Deploy murni lewat CI/CD (GitHub Actions → wrangler deploy), BUKAN
 # Cloudflare Pages. Web pakai Workers karena SSR (lihat docs/web/web-base-stack.md).
 #
 # Setup sekali di Cloudflare (manual):
-#   1. Worker `sambasku-web-staging` dibuat otomatis oleh deploy pertama.
-#   2. Attach custom domain: Workers & Pages → sambasku-web-staging →
-#      Settings → Domains & Routes → add `sambasku-web-staging.iamutaki.com`.
-#   3. Pastikan origin ini sudah ada di CORS_ALLOWED_ORIGINS API staging.
-
+#   1. Worker `sambasku-web-prod` dibuat otomatis oleh deploy pertama.
+#   2. Attach custom domain: Workers & Pages → sambasku-web-prod → Settings
+#      → Domains & Routes → add `sambasku.com` (+ `www.sambasku.com` redirect).
+#   3. API produksi harus ter-route di `https://sambasku.com/api/v1`
+#      (Worker sambasku-api), dan origin `https://sambasku.com` harus masuk
+#      CORS_ALLOWED_ORIGINS api/wrangler.toml [vars].
+#
 # Secrets repo (Settings → Secrets and variables → Actions):
 #   CLOUDFLARE_API_TOKEN   - izin "Workers Scripts: Edit" (BEDA kebutuhan
 #                            dengan admin yang pakai "Cloudflare Pages: Edit";
@@ -17,11 +19,11 @@ name: Deploy Web (Staging)
 
 on:
   push:
-    branches: [staging]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
-  group: deploy-web-staging
+  group: deploy-web-production
   cancel-in-progress: false
 
 permissions:
@@ -57,21 +59,22 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      # .env.staging TIDAK ter-track (gitignore) - nilai build di-inject
-      # langsung di sini; Vite memberi process env prioritas tertinggi.
-      # Nilai VITE_* memang publik (ter-embed di bundle JS) - aman inline.
-      - name: Build (staging)
-        run: pnpm build:staging
+      # `pnpm build` = react-router build (production adalah mode default,
+      # tidak perlu --mode). .env.production TIDAK ter-track - nilai build
+      # di-inject langsung di sini; Vite memberi process env prioritas
+      # tertinggi. Nilai VITE_* memang publik (ter-embed di bundle JS).
+      - name: Build (production)
+        run: pnpm build
         env:
-          VITE_API_BASE_URL: https://sambasku-staging.iamutaki.com/api/v1
-          VITE_APP_URL: https://sambasku-web-staging.iamutaki.com
-          VITE_APP_NAME: Kamus Sambas (Staging)
+          VITE_API_BASE_URL: https://sambasku.com/api/v1
+          VITE_APP_URL: https://sambasku.com
+          VITE_APP_NAME: SambasKu
 
-      # Config hasil build (dist/server/wrangler.json) dipakai, dengan
-      # override --name agar tidak menimpa Worker produksi.
+      # --name sambasku-web-prod: Worker produksi terpisah dari staging
+      # (sambasku-web-staging) maupun default (sambasku-web).
       - name: Deploy ke Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --config dist/server/wrangler.json --name sambasku-web-staging
+          command: deploy --config dist/server/wrangler.json --name sambasku-web-prod

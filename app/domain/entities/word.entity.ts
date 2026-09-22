@@ -27,6 +27,16 @@ export interface WordTranslation {
   translation_type: string;
 }
 
+export interface WordAudio {
+  id: string;
+  url: string;
+  dialect_id: string | null;
+  speaker_name: string | null;
+  duration_ms: number | null;
+  is_primary: boolean;
+  mime_type: string;
+}
+
 export interface WordExample {
   id: string;
   source_language_id: string;
@@ -34,6 +44,7 @@ export interface WordExample {
   target_language_id: string | null;
   target_sentence: string | null;
   source_type: string | null;
+  audios: WordAudio[];
 }
 
 export interface WordMeaning {
@@ -97,6 +108,7 @@ export interface WordDetail {
   meanings: WordMeaning[];
   categories: Array<{ id: string; name: string }>;
   pronunciations: WordPronunciation[];
+  audios: WordAudio[];
   images: WordImage[];
   related_words: RelatedWord[];
   appears_in?: RelatedWord[];

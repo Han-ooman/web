@@ -1,8 +1,10 @@
 node_modules
 /.react-router
 /build
+/dist
+.wrangler
+# Env asli tidak masuk repo - hanya template *.example
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.*.example
 .DS_Store
-dist

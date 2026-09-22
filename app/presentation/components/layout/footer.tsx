@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import { Anchor, Container, Divider, Group, Stack, Text } from '@mantine/core';
-import { Heart, ExternalLink, BookOpen } from 'lucide-react';
+import { Heart, ExternalLink } from 'lucide-react';
+import { Logo } from './logo';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -9,12 +10,9 @@ export function Footer() {
     <Container size="md" py="md">
       <Group justify="space-between" gap="md">
         <Group gap="xs" justify="center">
-          <BookOpen size={16} />
+          <Logo h={28} />
           <Text size="sm" c="dimmed">
-            <Text span fw={600} c="var(--mantine-color-text)">
-              SambasKu
-            </Text>{' '}
-            — Kamus Digital Kolaboratif Bahasa Sambas &amp; Indonesia
+            Kamus Digital Kolaboratif Bahasa Sambas &amp; Indonesia
           </Text>
         </Group>
 

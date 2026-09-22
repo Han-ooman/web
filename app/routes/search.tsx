@@ -26,6 +26,8 @@ export function meta({ data }: Route.MetaArgs) {
     title: `Pencarian ${query}`,
     description: `Hasil pencarian kosakata ${query} dalam Kamus Digital Sambas-Indonesia.`,
     path: `/search${data?.q ? `?q=${encodeURIComponent(data.q)}` : ''}`,
+    // Halaman hasil pencarian = thin content, noindex di semua environment.
+    noindexAlways: true,
   });
 }
 
@@ -138,7 +140,9 @@ export default function SearchPage() {
         )}
 
         {/* Results Area */}
-        {!q ? (
+        {isLoading && q ? (
+          <WordListSkeleton count={5} />
+        ) : !q ? (
           <Stack align="center" gap="sm" py={64}>
             <ThemeIcon size={52} variant="light" radius="xl">
               <Search size={24} />

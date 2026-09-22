@@ -33,7 +33,8 @@ const theme = createTheme({
 });
 
 export const links: Route.LinksFunction = () => [
-  { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
+  { rel: 'icon', href: '/logo.png', type: 'image/png' },
+  { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   {
     rel: 'preconnect',
@@ -58,20 +59,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <MantineProvider theme={theme} defaultColorScheme="auto">
-          <AppShell
-            header={{ height: 60 }}
-            footer={{ height: 'auto', fixed: false }}
-            padding={0}
-          >
+          {/* Footer di luar AppShell: AppShell.Footer Mantine v9 fixed
+              by default (menutupi konten) dan tanpa opsi non-fixed. */}
+          <AppShell header={{ height: 60 }} padding={0}>
             <AppShell.Header>
               <Header />
             </AppShell.Header>
             <RouteProgressBar />
             <AppShell.Main>{children}</AppShell.Main>
-            <AppShell.Footer>
-              <Footer />
-            </AppShell.Footer>
           </AppShell>
+          <Footer />
         </MantineProvider>
         <ScrollRestoration />
         <Scripts />

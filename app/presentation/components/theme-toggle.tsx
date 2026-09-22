@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import {
   ActionIcon,
   Tooltip,
@@ -9,10 +10,16 @@ import { Sun, Moon } from 'lucide-react';
 export function ThemeToggle() {
   const { setColorScheme } = useMantineColorScheme();
   const computed = useComputedColorScheme('light');
+  // Server selalu merender skema default; nilai localStorage baru terbaca
+  // setelah mount - gate ikon agar tidak hydration mismatch.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const isDark = mounted && computed === 'dark';
 
   return (
     <Tooltip
-      label={computed === 'dark' ? 'Tema terang' : 'Tema gelap'}
+      label={isDark ? 'Tema terang' : 'Tema gelap'}
       position="bottom-end"
     >
       <ActionIcon
@@ -21,7 +28,7 @@ export function ThemeToggle() {
         aria-label="Ganti tema"
         onClick={() => setColorScheme(computed === 'dark' ? 'light' : 'dark')}
       >
-        {computed === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+        {isDark ? <Sun size={16} /> : <Moon size={16} />}
       </ActionIcon>
     </Tooltip>
   );

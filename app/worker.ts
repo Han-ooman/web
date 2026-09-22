@@ -1,4 +1,5 @@
 import { createRequestHandler } from 'react-router';
+import { env } from './infrastructure/config/env';
 
 const requestHandler = createRequestHandler(
   () => import('virtual:react-router/server-build'),
@@ -24,6 +25,10 @@ export default {
     const headers = new Headers(response.headers);
     for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
       headers.set(key, value);
+    }
+    // Staging tidak boleh terlisting di search engine.
+    if (!env.isProd) {
+      headers.set('X-Robots-Tag', 'noindex, nofollow');
     }
     return new Response(response.body, {
       status: response.status,

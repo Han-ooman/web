@@ -2,10 +2,14 @@ import { listWordsAtoZ } from '../application/use-cases/word.use-case';
 import { env } from '../infrastructure/config/env';
 
 export async function loader() {
+  // Sitemap hanya untuk produksi - staging noindex total.
+  if (!env.isProd) {
+    throw new Response('Not Found', { status: 404 });
+  }
+
   const staticRoutes = [
     { path: '', priority: '1.0', changefreq: 'daily' },
     { path: '/words', priority: '0.9', changefreq: 'daily' },
-    { path: '/search', priority: '0.8', changefreq: 'weekly' },
   ];
 
   let wordEntries: Array<{ path: string; priority: string; changefreq: string }> = [];
