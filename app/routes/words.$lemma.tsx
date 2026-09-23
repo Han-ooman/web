@@ -178,6 +178,20 @@ export default function WordDetailPage() {
               )}
               <WordTypeBadge type={word.word_type} />
             </Group>
+            {(word.created_by?.username || word.verified_by?.username) && (
+              <Stack gap={2}>
+                {word.created_by?.username ? (
+                  <Text size="sm" c="dimmed">
+                    Dibuat oleh {word.created_by.username}
+                  </Text>
+                ) : null}
+                {word.is_verified && word.verified_by?.username ? (
+                  <Text size="sm" c="teal" fw={600}>
+                    Diverifikasi oleh {word.verified_by.username}
+                  </Text>
+                ) : null}
+              </Stack>
+            )}
 
             {/* Notasi IPA (teks) + audio multi-take dari word_audios */}
             {word.pronunciations.length > 0 && (
