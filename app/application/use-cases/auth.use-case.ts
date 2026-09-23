@@ -8,6 +8,26 @@ export interface ResetPasswordInput {
   signal?: AbortSignal;
 }
 
+export async function requestAccountDeletion(email: string): Promise<string> {
+  const result = await apiClient<{ message: string }>('/auth/delete-account/request', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+  return result.data.message;
+}
+
+export async function confirmAccountDeletion(input: {
+  email: string;
+  code: string;
+  confirmation: string;
+}): Promise<string> {
+  const result = await apiClient<{ message: string }>('/auth/delete-account/confirm', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+  return result.data.message;
+}
+
 export async function resetPassword(input: ResetPasswordInput): Promise<string> {
   const result = await apiClient<{ message: string }>('/auth/reset-password', {
     method: 'POST',

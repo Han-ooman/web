@@ -16,6 +16,7 @@ export async function loader() {
     { path: '/words', priority: '0.9', changefreq: 'daily' },
     { path: '/faq', priority: '0.8', changefreq: 'monthly' },
     { path: '/privacy-policy', priority: '0.5', changefreq: 'yearly' },
+    { path: '/hapus-akun', priority: '0.4', changefreq: 'yearly' },
   ];
 
   const wordPaths = new Set<string>();

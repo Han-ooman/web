@@ -1,10 +1,6 @@
 /**
- * Kebijakan Privasi SambasKu — selaras dengan data yang diproses
- * aplikasi Flutter (mobile/pubspec.yaml) + API.
- *
- * Ditulis mengikuti struktur umum privacy policy generator (Play /
- * App Store): identitas pengontrol, data yang dikumpulkan, tujuan,
- * pihak ketiga, hak pengguna, retensi, keamanan, anak, perubahan.
+ * Kebijakan Privasi SambasKu: bahasa pengguna (bukan daftar SDK).
+ * Isi tetap selaras dengan data yang diproses aplikasi + API.
  */
 
 export interface PrivacySection {
@@ -14,16 +10,15 @@ export interface PrivacySection {
   bullets?: string[];
 }
 
-/** Tanggal efektif (ISO date display ID). */
 export const PRIVACY_EFFECTIVE_DATE = '23 September 2026';
 
 export const PRIVACY_LAST_UPDATED = PRIVACY_EFFECTIVE_DATE;
 
 export const PRIVACY_CONTACT =
-  'Untuk pertanyaan privasi, buka isu di https://github.com/iamutaki/sambasku atau hubungi pengelola melalui saluran resmi SambasKu yang tertera di aplikasi/situs.';
+  'Untuk pertanyaan privasi, buka isu di https://github.com/iamutaki/sambasku atau hubungi pengelola melalui saluran resmi SambasKu yang tertera di aplikasi maupun situs.';
 
 export const PRIVACY_INTRO = [
-  'Kebijakan Privasi ini menjelaskan bagaimana SambasKu (“kami”, “aplikasi”, “layanan”) mengumpulkan, menggunakan, menyimpan, dan melindungi informasi ketika Anda menggunakan situs web SambasKu dan aplikasi Android SambasKu (package com.iamutaki.sambasku).',
+  'Kebijakan Privasi ini menjelaskan bagaimana SambasKu (“kami”, “aplikasi”, atau “layanan”) mengumpulkan, menggunakan, menyimpan, dan melindungi informasi ketika Anda menggunakan situs web dan aplikasi Android SambasKu.',
   'Dengan menggunakan SambasKu, Anda menyetujui praktik yang diuraikan di sini. Jika Anda tidak setuju, mohon jangan menggunakan layanan.',
 ];
 
@@ -32,19 +27,17 @@ export const PRIVACY_SECTIONS: PrivacySection[] = [
     id: 'pengontrol',
     title: '1. Pengontrol data',
     paragraphs: [
-      'Pengontrol data untuk layanan SambasKu adalah pengelola proyek SambasKu (identitas developer terkait com.iamutaki.sambasku). SambasKu adalah kamus digital kolaboratif bahasa Melayu Sambas–Indonesia.',
+      'Pengontrol data untuk layanan SambasKu adalah pengelola proyek SambasKu. SambasKu adalah kamus digital kolaboratif bahasa Melayu Sambas-Indonesia.',
     ],
   },
   {
     id: 'cakupan',
     title: '2. Cakupan',
-    paragraphs: [
-      'Kebijakan ini berlaku untuk:',
-    ],
+    paragraphs: ['Kebijakan ini berlaku untuk:'],
     bullets: [
       'Situs web SambasKu (termasuk pencarian kata, kontribusi, dan halaman terkait)',
-      'Aplikasi seluler SambasKu di Android (flavor production dan staging)',
-      'Layanan API backend yang mendukung fitur login, kamus, kontribusi, notifikasi, dan unggahan media',
+      'Aplikasi seluler SambasKu di Android',
+      'Layanan backend yang mendukung login, kamus, kontribusi, notifikasi, dan unggahan media',
     ],
   },
   {
@@ -54,24 +47,24 @@ export const PRIVACY_SECTIONS: PrivacySection[] = [
       'Jenis data bergantung pada fitur yang Anda gunakan. Kami tidak menjual data pribadi Anda.',
     ],
     bullets: [
-      'Akun & autentikasi: alamat email, nama/username, kata sandi (disimpan ter-hash di server), token sesi; jika Anda masuk dengan Google Sign-In (`google_sign_in`) atau Facebook Login (`flutter_facebook_auth`), kami menerima pengenal dan profil dasar yang disediakan penyedia tersebut sesuai izin Anda',
-      'Profil: foto avatar (jika diunggah lewat `image_picker` / `file_picker`), data profil publik yang Anda pilih untuk ditampilkan',
-      'Konten yang Anda kirim: usulan kata, makna, contoh, koreksi, komentar, laporan bug/kata (dapat menyertakan versi aplikasi via `package_info_plus`), pengajuan verifikator, serta lampiran gambar atau rekaman audio pelafalan (`record`)',
-      'Perangkat & push: pengenal perangkat (`flutter_udid`), token Firebase Cloud Messaging (`firebase_messaging` + `firebase_core`), notifikasi lokal (`awesome_notifications`)',
-      'Analitik aplikasi: peristiwa penggunaan melalui Firebase Analytics (`firebase_analytics`) untuk memahami kualitas produk',
-      'Izin perangkat (`permission_handler`, hanya saat fitur membutuhkannya): kamera/galeri (unggah gambar), mikrofon (rekam pelafalan), penyimpanan/galeri (`gal` untuk menyimpan kartu share), notifikasi',
-      'Berbagi & media: konten yang Anda bagikan lewat lembar share sistem (`share_plus`); pemutaran audio/video di aplikasi (`just_audio`, `video_player`) dari URL yang sudah ada di layanan (tanpa merekam aktivitas di luar aplikasi)',
-      'Peta: ubin peta ditampilkan lewat MapLibre (`maplibre_gl`); tidak digunakan untuk pelacakan GPS berkelanjutan',
-      'Data teknis jaringan: permintaan HTTP ke API SambasKu (`dio` / `retrofit`), termasuk alamat IP dan log di infrastruktur server untuk keamanan dan ketersediaan',
-      'Penyimpanan lokal di perangkat: preferensi (`shared_preferences`), token aman (`flutter_secure_storage`), cache gambar (`cached_network_image`), file sementara (`path_provider`)',
-      'Font jarak jauh: unduhan font lewat Google Fonts (`google_fonts`) — penyedia dapat memproses permintaan teknis (misalnya IP) sesuai kebijakan Google',
+      'Akun dan autentikasi: alamat email, nama atau username, kata sandi (disimpan dalam bentuk terenkripsi/hash di server), serta token sesi. Jika Anda masuk dengan Google, kami menerima pengenal dan informasi profil dasar yang Anda izinkan dari penyedia tersebut',
+      'Profil: foto avatar (jika diunggah) dan data profil yang Anda pilih untuk ditampilkan secara publik',
+      'Konten yang Anda kirim: usulan kata, makna, contoh kalimat, koreksi, komentar, laporan, pengajuan menjadi verifikator, serta lampiran gambar atau rekaman audio pelafalan. Laporan teknis dapat menyertakan versi aplikasi',
+      'Perangkat dan notifikasi: pengenal perangkat, token layanan pemberitahuan push, serta preferensi notifikasi di perangkat',
+      'Analitik: peristiwa penggunaan aplikasi secara agregat untuk memahami kualitas dan memperbaiki produk',
+      'Izin perangkat (hanya saat fitur membutuhkannya dan setelah Anda mengizinkan): kamera atau galeri untuk unggah gambar, mikrofon untuk merekam pelafalan, akses galeri untuk menyimpan kartu yang dibagikan, serta notifikasi',
+      'Berbagi dan media: konten yang Anda bagikan melalui menu berbagi sistem operasi; pemutaran audio atau video dari materi yang sudah tersedia di layanan',
+      'Peta: tampilan peta untuk fitur eksplorasi; kami tidak menggunakan fitur ini untuk melacak lokasi perangkat Anda secara berkelanjutan',
+      'Data teknis: alamat IP dan log permintaan di infrastruktur server untuk keamanan, diagnosis gangguan, dan ketersediaan layanan',
+      'Penyimpanan di perangkat: preferensi aplikasi, token aman, cache gambar, dan file sementara yang diperlukan agar aplikasi berjalan',
+      'Font daring: unduhan font dari Google Fonts; Google dapat memproses data teknis permintaan (misalnya alamat IP) sesuai kebijakan mereka',
     ],
   },
   {
     id: 'tidak-dikumpulkan',
     title: '4. Data yang tidak kami kumpulkan secara sengaja',
     paragraphs: [
-      'Kami tidak meminta data sensitif seperti nomor KTP, data keuangan, atau lokasi GPS akurat untuk fitur inti kamus. Peta eksplorasi memakai peta OpenFreeMap/MapLibre untuk menampilkan konteks geografis; kami tidak menggunakan itu untuk melacak lokasi perangkat Anda secara berkelanjutan.',
+      'Kami tidak meminta data sensitif seperti nomor identitas resmi, data keuangan, atau lokasi GPS akurat untuk fitur inti kamus. Peta eksplorasi hanya menampilkan konteks geografis dan tidak dipakai untuk pelacakan lokasi berkelanjutan.',
     ],
   },
   {
@@ -83,7 +76,7 @@ export const PRIVACY_SECTIONS: PrivacySection[] = [
       'Autentikasi, keamanan sesi, dan pemulihan kata sandi',
       'Memproses kontribusi komunitas dan alur verifikasi',
       'Mengirim notifikasi terkait aktivitas yang Anda aktifkan',
-      'Meningkatkan kualitas aplikasi melalui analitik agregat',
+      'Meningkatkan kualitas aplikasi melalui analitik',
       'Mencegah penyalahgunaan, spam, dan pelanggaran ketentuan layanan',
       'Memenuhi kewajiban hukum bila diwajibkan',
     ],
@@ -92,75 +85,75 @@ export const PRIVACY_SECTIONS: PrivacySection[] = [
     id: 'dasar-hukum',
     title: '6. Dasar pemrosesan',
     paragraphs: [
-      'Pemrosesan dilakukan berdasarkan: (a) pelaksanaan kontrak layanan yang Anda minta; (b) persetujuan Anda (misalnya login sosial, izin kamera/mikrofon, push notification); (c) kepentingan sah kami untuk keamanan, anti-penyalahgunaan, dan pengembangan produk; dan/atau (d) kewajiban hukum.',
+      'Pemrosesan dilakukan berdasarkan: (a) pelaksanaan layanan yang Anda minta; (b) persetujuan Anda (misalnya masuk dengan Google, izin kamera atau mikrofon, dan notifikasi); (c) kepentingan sah kami untuk keamanan, anti-penyalahgunaan, dan pengembangan produk; dan/atau (d) kewajiban hukum.',
     ],
   },
   {
     id: 'pihak-ketiga',
     title: '7. Layanan pihak ketiga',
     paragraphs: [
-      'Kami memakai penyedia yang membantu menjalankan SambasKu. Mereka memproses data sesuai kebijakan mereka sendiri dan hanya sejauh diperlukan untuk layanan yang kami aktifkan:',
+      'Kami menggunakan penyedia yang membantu menjalankan SambasKu. Mereka memproses data sesuai kebijakan masing-masing dan hanya sejauh diperlukan untuk layanan yang kami aktifkan:',
     ],
     bullets: [
-      'Google (Google Sign-In, Firebase Core / Analytics / Cloud Messaging, Google Fonts) — autentikasi, analitik, push, distribusi font',
-      'Meta / Facebook (Facebook Login) — autentikasi opsional',
-      'Cloudflare — hosting Workers/Pages dan jaringan edge',
-      'Turso / LibSQL — penyimpanan basis data aplikasi',
-      'Resend — pengiriman email (OTP, reset kata sandi)',
-      'ImageKit — penyimpanan gambar privat tertentu (mis. lampiran laporan / bukti)',
-      'GitHub + CDN (jsDelivr / wsrv) — aset gambar kata/avatar dan audio pelafalan publik',
-      'OpenFreeMap / MapLibre — ubin peta untuk fitur eksplorasi',
-      'Google Play / layanan distribusi aplikasi — instalasi dan pembaruan aplikasi Android',
-      'Aplikasi lain di perangkat — hanya jika Anda memilih membagikan konten lewat share sheet sistem (`share_plus`)',
+      'Google: masuk dengan Google, Firebase (analitik dan pemberitahuan push), serta Google Fonts',
+      'Cloudflare: hosting dan jaringan pengiriman layanan',
+      'Turso: penyimpanan basis data aplikasi',
+      'Resend: pengiriman email (kode verifikasi dan reset kata sandi)',
+      'ImageKit: penyimpanan gambar privat tertentu (misalnya lampiran laporan)',
+      'GitHub dan CDN publik: aset gambar kata, avatar, dan audio pelafalan yang bersifat publik',
+      'OpenFreeMap / MapLibre: tampilan peta untuk fitur eksplorasi',
+      'Google Play: distribusi dan pembaruan aplikasi Android',
+      'Aplikasi lain di perangkat Anda: hanya jika Anda memilih membagikan konten melalui menu berbagi sistem',
     ],
   },
   {
     id: 'berbagi',
     title: '8. Pembagian data',
     paragraphs: [
-      'Kami tidak menjual data pribadi. Data dapat dibagikan hanya kepada: (a) penyedia di bagian 7 sebagai pemroses; (b) otoritas hukum jika diwajibkan; (c) publik, untuk konten yang Anda buat bersifat publik di kamus (misalnya lemma/definisi yang disetujui, username publik, avatar).',
+      'Kami tidak menjual data pribadi. Data dapat dibagikan hanya kepada: (a) penyedia di bagian 7 sebagai pemroses; (b) otoritas hukum jika diwajibkan; (c) publik, untuk konten yang Anda buat dan bersifat publik di kamus (misalnya kata atau definisi yang disetujui, username publik, dan avatar).',
     ],
   },
   {
     id: 'retensi',
     title: '9. Retensi',
     paragraphs: [
-      'Data akun dan konten disimpan selama akun aktif atau selama diperlukan untuk layanan kamus dan audit. Log teknis disimpan dalam jangka waktu wajar untuk keamanan. Anda dapat meminta penghapusan akun/data melalui saluran kontak di bawah; kami akan memproses sejauh diizinkan hukum dan kebutuhan operasional (misalnya salinan kontribusi yang sudah menjadi bagian kamus publik dapat tetap ada dalam bentuk teranonimisasi atau sebagai konten komunitas).',
+      'Data akun dan konten disimpan selama akun aktif atau selama diperlukan untuk layanan kamus dan audit. Log teknis disimpan dalam jangka waktu wajar untuk keamanan.',
+      'Anda dapat menghapus akun kapan saja: di aplikasi Android lewat Profil → Hapus akun, atau lewat situs di https://sambasku.com/hapus-akun (kode dikirim ke email). Penghapusan langsung menghapus nama, email, nomor HP, kata sandi, avatar, sesi, token notifikasi, bookmark, dan data pribadi pada pengajuan verifikator serta laporan bug. Entri kamus, komentar, dan kontribusi yang sudah tayang tetap ada tanpa nama akun.',
     ],
   },
   {
     id: 'keamanan',
     title: '10. Keamanan',
     paragraphs: [
-      'Kami menerapkan langkah wajar: transportasi HTTPS, hash kata sandi, token sensitif di penyimpanan aman perangkat, dan kontrol akses di server. Tidak ada metode transmisi atau penyimpanan elektronik yang 100% aman; kami tidak dapat menjamin keamanan absolut.',
+      'Kami menerapkan langkah yang wajar, termasuk koneksi terenkripsi (HTTPS), penyimpanan kata sandi yang di-hash, perlindungan token di perangkat, dan kontrol akses di server. Tidak ada metode transmisi atau penyimpanan elektronik yang sepenuhnya aman; kami tidak dapat menjamin keamanan absolut.',
     ],
   },
   {
     id: 'hak',
     title: '11. Hak Anda',
     paragraphs: [
-      'Sesuai hukum yang berlaku, Anda dapat meminta akses, koreksi, penghapusan, pembatasan pemrosesan, atau menarik persetujuan (misalnya mencabut izin notifikasi/kamera di pengaturan perangkat, atau memutuskan tautan akun Google/Facebook). Untuk permintaan terkait akun di server, hubungi kami melalui saluran di bagian Kontak.',
+      'Sesuai hukum yang berlaku, Anda dapat meminta akses, koreksi, penghapusan, atau pembatasan pemrosesan, serta menarik persetujuan (misalnya mencabut izin notifikasi atau kamera di pengaturan perangkat, atau memutuskan tautan akun Google). Penghapusan akun tersedia di aplikasi (Profil → Hapus akun) dan di https://sambasku.com/hapus-akun. Untuk permintaan lain, hubungi kami melalui saluran di bagian Kontak.',
     ],
   },
   {
     id: 'anak',
     title: '12. Anak-anak',
     paragraphs: [
-      'SambasKu tidak ditujukan khusus untuk anak di bawah 13 tahun (atau usia minimum lain yang berlaku di yurisdiksi Anda). Kami tidak dengan sengaja mengumpulkan data pribadi dari anak-anak. Jika Anda percaya anak telah memberikan data kepada kami, hubungi kami agar dapat dihapus.',
+      'SambasKu tidak ditujukan khusus untuk anak di bawah 13 tahun (atau usia minimum lain yang berlaku di yurisdiksi Anda). Kami tidak dengan sengaja mengumpulkan data pribadi dari anak-anak. Jika Anda percaya anak telah memberikan data kepada kami, hubungi kami agar data tersebut dapat dihapus.',
     ],
   },
   {
     id: 'internasional',
     title: '13. Transfer internasional',
     paragraphs: [
-      'Infrastruktur dan penyedia kami dapat memproses data di server di luar negara tempat Anda tinggal (misalnya wilayah cloud penyedia). Dengan menggunakan layanan, Anda memahami bahwa data dapat dipindahkan ke yurisdiksi tersebut dengan perlindungan yang wajar.',
+      'Infrastruktur dan penyedia kami dapat memproses data di server di luar negara tempat Anda tinggal. Dengan menggunakan layanan, Anda memahami bahwa data dapat dipindahkan ke yurisdiksi tersebut dengan perlindungan yang wajar.',
     ],
   },
   {
     id: 'perubahan',
     title: '14. Perubahan kebijakan',
     paragraphs: [
-      'Kami dapat memperbarui Kebijakan Privasi ini dari waktu ke waktu. Tanggal “Terakhir diperbarui” di atas halaman ini akan diubah. Penggunaan berkelanjutan setelah perubahan berarti Anda menerima kebijakan yang diperbarui, sejauh diizinkan hukum.',
+      'Kami dapat memperbarui Kebijakan Privasi ini dari waktu ke waktu. Tanggal “Terakhir diperbarui” di halaman ini akan diubah. Penggunaan berkelanjutan setelah perubahan berarti Anda menerima kebijakan yang diperbarui, sejauh diizinkan hukum.',
     ],
   },
   {
