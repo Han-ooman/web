@@ -23,6 +23,15 @@ export function Footer() {
           <Anchor component={Link} to="/faq" size="xs" c="dimmed" py={4}>
             FAQ
           </Anchor>
+          <Anchor
+            component={Link}
+            to="/privacy-policy"
+            size="xs"
+            c="dimmed"
+            py={4}
+          >
+            Privasi
+          </Anchor>
           <Anchor component={Link} to="/search" size="xs" c="dimmed" py={4}>
             Pencarian
           </Anchor>
