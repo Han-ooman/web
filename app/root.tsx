@@ -33,7 +33,11 @@ const theme = createTheme({
 });
 
 export const links: Route.LinksFunction = () => [
-  { rel: 'icon', href: '/logo.png', type: 'image/png' },
+  // Satu favicon, 192px (48×4). Google Search menolak ikon yang bukan
+  // kelipatan 48px. logo.png 512px plus wordmark tidak pernah tampil
+  // di hasil pencarian. /favicon.ico (48px, emblem yang sama) tetap
+  // ada untuk browser yang meminta path itu.
+  { rel: 'icon', href: '/favicon-192.png', type: 'image/png', sizes: '192x192' },
   { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
   // Font self-host (lihat app.css) - preload woff2 utama biar LCP tidak
   // menunggu CSS parse dulu sebelum font ditemukan.

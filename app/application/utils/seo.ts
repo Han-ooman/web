@@ -52,6 +52,19 @@ export function buildMetaTags({
   ];
 }
 
+/** Entitas situs: "Kamus Sambas" adalah nama yang dicari, SambasKu nama merek. */
+export function buildHomeJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Kamus Sambas',
+    alternateName: [env.appName, 'Kamus Digital Sambas-Indonesia'],
+    url: env.appUrl,
+    description:
+      'Kamus Sambas adalah kamus digital bahasa Melayu Sambas dan Indonesia untuk kosakata, makna, terjemahan, dan peribahasa.',
+  };
+}
+
 export function buildWordJsonLd(word: WordDetail) {
   const firstMeaning = word.meanings[0];
   const definition = firstMeaning?.definition ?? `Arti kata ${word.lemma} dalam bahasa Sambas`;
@@ -65,7 +78,8 @@ export function buildWordJsonLd(word: WordDetail) {
     description: definition,
     inDefinedTermSet: {
       '@type': 'DefinedTermSet',
-      name: env.appName,
+      name: 'Kamus Sambas',
+      alternateName: env.appName,
       url: env.appUrl,
     },
     ...(primaryImage ? { image: primaryImage } : {}),

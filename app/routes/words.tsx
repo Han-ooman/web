@@ -21,11 +21,11 @@ import { WordListSkeleton } from '../presentation/components/word/word-card-skel
 import type { WordSummary } from '../domain/entities/word.entity';
 
 export function meta({ data }: Route.MetaArgs) {
-  const query = data?.q ? `Filter "${data.q}"` : 'Daftar Kata A-Z';
+  const query = data?.q ? `Kata "${data.q}" di Kamus Sambas` : 'Daftar Kata Kamus Sambas';
   return buildMetaTags({
-    title: `${query} | Kamus Digital Sambas-Indonesia`,
+    title: query,
     description:
-      'Jelajahi seluruh kosakata bahasa Sambas yang telah diterbitkan dan diverifikasi secara alfabetis dari A sampai Z.',
+      'Daftar kosakata Kamus Sambas dari A sampai Z. Setiap entri sudah diterbitkan dan diverifikasi.',
     path: `/words${data?.q ? `?q=${encodeURIComponent(data.q)}` : ''}`,
   });
 }
@@ -107,8 +107,7 @@ export default function WordsPage() {
                 <Title order={2}>Daftar Kata A-Z</Title>
               </Group>
               <Text size="sm" c="dimmed">
-                Katalog lengkap seluruh kosakata yang telah terverifikasi dan tayang
-                di kamus.
+                Katalog kosakata Kamus Sambas yang sudah terverifikasi dan tayang.
               </Text>
             </Stack>
 

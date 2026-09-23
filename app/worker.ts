@@ -53,7 +53,7 @@ async function render(request: Request): Promise<Response> {
   });
 }
 
-async function renderAndCache(request: Request): Promise<Response> {
+async function renderAndCache(request: Request, ctx: ExecutionContext): Promise<Response> {
   const response = await render(request);
   if (response.status === 200) {
     // Tandai waktu simpan; TTL panjang agar entry tidak dihapus cache API,
@@ -61,7 +61,12 @@ async function renderAndCache(request: Request): Promise<Response> {
     const headers = new Headers(response.headers);
     headers.set('x-cached-at', String(Date.now()));
     headers.set('Cache-Control', `public, max-age=${STALE_MAX_S}`);
-    await edgeCache.put(request, new Response(response.body, { status: 200, headers }));
+    // PENTING: body stream cuma boleh dibaca SATU kali. clone() dulu untuk
+    // cache - pakai response.body langsung membuat stream "disturbed" dan
+    // response yang dikembalikan ke klien melempar error. put di waitUntil
+    // supaya klien tidak menunggu penulisan cache.
+    const forCache = new Response(response.clone().body, { status: 200, headers });
+    ctx.waitUntil(edgeCache.put(request, forCache));
   }
   return response;
 }
@@ -79,14 +84,14 @@ export default {
     if (cached) {
       const ageS = (Date.now() - Number(cached.headers.get('x-cached-at') ?? 0)) / 1000;
       if (ageS > FRESH_S && ageS < STALE_MAX_S) {
-        ctx.waitUntil(renderAndCache(request));
+        ctx.waitUntil(renderAndCache(request, ctx));
       }
       const headers = new Headers(cached.headers);
       headers.set('x-cache', ageS <= FRESH_S ? 'hit' : 'swr');
       return new Response(cached.body, { status: cached.status, headers });
     }
 
-    const response = await renderAndCache(request);
+    const response = await renderAndCache(request, ctx);
     const headers = new Headers(response.headers);
     headers.set('x-cache', 'miss');
     return new Response(response.body, { status: response.status, headers });

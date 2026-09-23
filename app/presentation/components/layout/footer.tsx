@@ -12,7 +12,7 @@ export function Footer() {
         <Group gap="xs" justify="center">
           <Logo h={28} />
           <Text size="sm" c="dimmed">
-            Kamus Digital Kolaboratif Bahasa Sambas &amp; Indonesia
+            Kamus Sambas, kamus digital bahasa Sambas &amp; Indonesia
           </Text>
         </Group>
 

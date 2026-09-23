@@ -14,17 +14,22 @@ import {
 import { Sparkles, PlusCircle } from 'lucide-react';
 import type { Route } from './+types/home';
 import { getWordOfDay } from '../application/use-cases/word.use-case';
-import { buildMetaTags } from '../application/utils/seo';
+import { buildHomeJsonLd, buildMetaTags } from '../application/utils/seo';
+import { env } from '../infrastructure/config/env';
 import { SearchBar } from '../presentation/components/word/search-bar';
 import { WordOfTheDayCard } from '../presentation/components/word/word-of-the-day-card';
 
 export function meta(_args: Route.MetaArgs) {
-  return buildMetaTags({
-    title: 'Kamus Digital Sambas-Indonesia',
-    description:
-      'Pusat dokumentasi dan pencarian kosakata, makna, terjemahan, dan peribahasa bahasa Melayu Sambas secara terbuka dan kolaboratif.',
-    path: '/',
-  });
+  return [
+    ...buildMetaTags({
+      title: 'Kamus Sambas',
+      description:
+        'Kamus Sambas untuk mencari kosakata, makna, terjemahan, dan peribahasa bahasa Melayu Sambas ke bahasa Indonesia. Terbuka dan kolaboratif.',
+      path: '/',
+    }),
+    // Hanya produksi. Staging noindex, jadi entitas ini tidak boleh ikut terbit.
+    ...(env.isProd ? [{ 'script:ld+json': buildHomeJsonLd() }] : []),
+  ];
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -48,11 +53,11 @@ export default function Home() {
             leftSection={<Sparkles size={13} />}
             size="sm"
           >
-            Kamus Digital Terbuka &amp; Terverifikasi
+            Kamus Digital Terbuka Bahasa Sambas
           </Badge>
 
           <Title order={1} ta="center" fw={800}>
-            Pusat Kosakata Bahasa Sambas
+            Kamus Sambas
           </Title>
 
           <Text c="dimmed" size="lg" ta="center" maw={560}>

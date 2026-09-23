@@ -86,3 +86,24 @@ export async function getWordByLemma(lemma: string, signal?: AbortSignal): Promi
   });
   return res.data;
 }
+
+export interface KbbiSuggestion {
+  id: string;
+  lemma: string;
+  word_class_code: string | null;
+  word_class_label: string | null;
+  definition: string;
+  preview: string;
+}
+
+/** Lookup definisi KBBI (publik) untuk prefill form kontribusi. */
+export async function lookupKbbi(
+  lemma: string,
+  signal?: AbortSignal,
+): Promise<KbbiSuggestion[]> {
+  const res = await apiClient<{ found: boolean; suggestions: KbbiSuggestion[] }>(
+    `/lemma-definitions/lookup?lemma=${encodeURIComponent(lemma)}`,
+    { signal },
+  );
+  return res.data.suggestions;
+}
