@@ -1,6 +1,6 @@
 import { Anchor, Drawer, Group, Stack } from '@mantine/core';
 import { Search, List } from 'lucide-react';
-import { Link, useLocation, useNavigate } from 'react-router';
+import { Link, useLocation } from 'react-router';
 
 const NAV_ITEMS = [
   { to: '/words', label: 'Daftar Kata A-Z', icon: List },
@@ -17,13 +17,7 @@ export function MobileDrawer({
   onClose: () => void;
 }) {
   const location = useLocation();
-  const navigate = useNavigate();
-
   const isActive = (path: string) => location.pathname.startsWith(path);
-  const goTo = (to: string) => {
-    onClose();
-    navigate(to);
-  };
 
   return (
     <Drawer opened={opened} onClose={onClose} title="Menu" padding="md" size="xs" position="right">
@@ -33,6 +27,8 @@ export function MobileDrawer({
             key={item.to}
             component={Link}
             to={item.to}
+            // Navigasi client-side tidak memicu onClose - tutup manual
+            onClick={onClose}
             underline="never"
             size="md"
             fw={isActive(item.to) ? 600 : 400}

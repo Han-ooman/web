@@ -11,7 +11,7 @@ import {
   Text,
   Title,
 } from '@mantine/core';
-import { Sparkles, ExternalLink, PlusCircle } from 'lucide-react';
+import { Sparkles, PlusCircle } from 'lucide-react';
 import type { Route } from './+types/home';
 import { getWordOfDay } from '../application/use-cases/word.use-case';
 import { buildMetaTags } from '../application/utils/seo';
@@ -115,13 +115,10 @@ export default function Home() {
             </Stack>
 
             <Button
-              component="a"
-              href="https://sambasku.iamutaki.com"
-              target="_blank"
-              rel="noreferrer"
+              component={Link}
+              to="/kontribusi"
               variant="light"
               leftSection={<PlusCircle size={16} />}
-              rightSection={<ExternalLink size={14} />}
             >
               Ajukan Kata Baru
             </Button>
