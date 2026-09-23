@@ -52,35 +52,124 @@ export function buildMetaTags({
   ];
 }
 
-/** Entitas situs: "Kamus Sambas" adalah nama yang dicari, SambasKu nama merek. */
+const HOME_DESCRIPTION =
+  'Kamus Sambas digital terbuka: cari kosakata Melayu Sambas, makna, terjemahan Indonesia, contoh kalimat, dan lafal. Jelajahi daftar A–Z atau kontribusi kata baru.';
+
+const PLAY_STORE_URL =
+  'https://play.google.com/store/apps/details?id=com.iamutaki.sambasku';
+const GITHUB_URL = 'https://github.com/iamutaki/sambasku';
+
+/**
+ * Entitas situs untuk homepage (prod only).
+ * "Kamus Sambas" = nama yang dicari; SambasKu = merek.
+ * Sitelinks Google tidak dijamin — schema + struktur hanya membuat eligible.
+ */
 export function buildHomeJsonLd() {
+  const websiteId = `${env.appUrl}/#website`;
+  const organizationId = `${env.appUrl}/#organization`;
+
   return {
     '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: 'Kamus Sambas',
-    alternateName: [env.appName, 'Kamus Digital Sambas-Indonesia'],
-    url: env.appUrl,
-    description:
-      'Kamus Sambas adalah kamus digital bahasa Melayu Sambas dan Indonesia untuk kosakata, makna, terjemahan, dan peribahasa.',
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        '@id': websiteId,
+        name: 'Kamus Sambas',
+        alternateName: [env.appName, 'Kamus Digital Sambas-Indonesia'],
+        url: env.appUrl,
+        description: HOME_DESCRIPTION,
+        inLanguage: 'id',
+        publisher: { '@id': organizationId },
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: {
+            '@type': 'EntryPoint',
+            urlTemplate: `${env.appUrl}/search?q={search_term_string}`,
+          },
+          'query-input': 'required name=search_term_string',
+        },
+      },
+      {
+        '@type': 'Organization',
+        '@id': organizationId,
+        name: env.appName,
+        url: env.appUrl,
+        logo: {
+          '@type': 'ImageObject',
+          url: `${env.appUrl}/favicon-192.png`,
+        },
+        sameAs: [PLAY_STORE_URL, GITHUB_URL],
+      },
+    ],
+  };
+}
+
+const SEO_DESCRIPTION_MAX = 158;
+
+function truncateSeo(text: string, max = SEO_DESCRIPTION_MAX): string {
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max - 1);
+  const lastSpace = cut.lastIndexOf(' ');
+  const base = (lastSpace > 80 ? cut.slice(0, lastSpace) : cut).trimEnd();
+  return `${base}…`;
+}
+
+function firstIndonesianTranslation(word: WordDetail): string | null {
+  const texts = word.meanings[0]?.translations
+    ?.map((t) => t.translation_text.trim())
+    .filter(Boolean);
+  return texts?.[0] ?? null;
+}
+
+/**
+ * Title/description detail kata untuk query seperti "{lemma} bahasa sambas".
+ * Contiguous "bahasa Sambas" di title + arti/terjemahan di description.
+ */
+export function buildWordSeoCopy(word: WordDetail): { title: string; description: string } {
+  const lemma = word.lemma;
+  const firstMeaning = word.meanings[0];
+  const definition =
+    firstMeaning?.definition?.trim() ||
+    `makna dan penggunaan dalam bahasa Melayu Sambas`;
+  const translation = firstIndonesianTranslation(word);
+
+  const title = `${lemma} bahasa Sambas — arti & terjemahan`;
+
+  const parts = [
+    `Arti ${lemma} dalam bahasa Sambas: ${definition}`,
+    translation ? `Terjemahan Indonesia: ${translation}.` : null,
+    'Kamus Sambas.',
+  ].filter(Boolean);
+
+  return {
+    title,
+    description: truncateSeo(parts.join(' ')),
   };
 }
 
 export function buildWordJsonLd(word: WordDetail) {
-  const firstMeaning = word.meanings[0];
-  const definition = firstMeaning?.definition ?? `Arti kata ${word.lemma} dalam bahasa Sambas`;
+  const { description } = buildWordSeoCopy(word);
+  const translation = firstIndonesianTranslation(word);
   const primaryImage = word.images.find((img) => img.is_primary)?.url ?? word.images[0]?.url;
+  const wordUrl = `${env.appUrl}/words/${encodeURIComponent(word.lemma)}`;
 
   return {
     '@context': 'https://schema.org',
     '@type': 'DefinedTerm',
     name: word.lemma,
+    alternateName: translation
+      ? [`${word.lemma} bahasa Sambas`, translation]
+      : [`${word.lemma} bahasa Sambas`],
     termCode: word.id,
-    description: definition,
+    description,
+    url: wordUrl,
+    inLanguage: 'id',
     inDefinedTermSet: {
       '@type': 'DefinedTermSet',
       name: 'Kamus Sambas',
-      alternateName: env.appName,
+      alternateName: [env.appName, 'Kamus Digital Sambas-Indonesia'],
       url: env.appUrl,
+      inLanguage: 'id',
     },
     ...(primaryImage ? { image: primaryImage } : {}),
   };

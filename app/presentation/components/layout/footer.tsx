@@ -18,7 +18,7 @@ export function Footer() {
 
         <Group gap="lg" justify="center">
           <Anchor component={Link} to="/words" size="xs" c="dimmed" py={4}>
-            Daftar A-Z
+            Daftar Kata A-Z
           </Anchor>
           <Anchor component={Link} to="/search" size="xs" c="dimmed" py={4}>
             Pencarian
