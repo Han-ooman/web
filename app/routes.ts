@@ -6,6 +6,7 @@ export default [
   route('kontribusi', 'routes/kontribusi.tsx'),
   route('faq', 'routes/faq.tsx'),
   route('privacy-policy', 'routes/privacy-policy.tsx'),
+  route('hapus-akun', 'routes/hapus-akun.tsx'),
   route('words', 'routes/words.tsx'),
   route('words/:lemma', 'routes/words.$lemma.tsx'),
   route('reset-password', 'routes/reset-password.tsx'),

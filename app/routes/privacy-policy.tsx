@@ -70,6 +70,10 @@ export default function PrivacyPolicyPage() {
         ))}
 
         <Text size="sm" c="dimmed">
+          <Anchor component={Link} to="/hapus-akun">
+            Hapus akun
+          </Anchor>
+          {' · '}
           <Anchor component={Link} to="/faq">
             FAQ
           </Anchor>

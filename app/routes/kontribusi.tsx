@@ -33,10 +33,13 @@ import {
 import { AppError, apiClient } from '../infrastructure/api/api-client';
 import type { WordSummary } from '../domain/entities/word.entity';
 import {
+  listDialects,
   listLanguages,
   listWordClasses,
+  pickDefaultDialectId,
   pickIndonesianLanguage,
   pickSambasLanguage,
+  pickUmumWordClassId,
 } from '../application/use-cases/reference.use-case';
 
 export function meta(_args: Route.MetaArgs) {
@@ -55,7 +58,9 @@ export async function loader({ request }: Route.LoaderArgs) {
     listLanguages(request.signal),
     listWordClasses(request.signal),
   ]);
-  return { languages, wordClasses };
+  const sambas = pickSambasLanguage(languages);
+  const dialects = sambas ? await listDialects(sambas.id, request.signal) : [];
+  return { languages, wordClasses, dialects };
 }
 
 interface MaknaForm {
@@ -392,13 +397,17 @@ function MaknaCard({
 }
 
 export default function KontribusiPage() {
-  const { languages, wordClasses } = useLoaderData<typeof loader>();
+  const { languages, wordClasses, dialects } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   const sambas = pickSambasLanguage(languages);
   const indonesia = pickIndonesianLanguage(languages);
+  const umumWordClassId = pickUmumWordClassId(wordClasses);
+  const defaultDialectId = pickDefaultDialectId(dialects);
 
   const [lemma, setLemma] = useState(searchParams.get('q')?.trim() ?? '');
-  const [maknaList, setMaknaList] = useState<MaknaForm[]>([{ ...emptyMakna }]);
+  const [maknaList, setMaknaList] = useState<MaknaForm[]>([
+    { ...emptyMakna, wordClassId: umumWordClassId },
+  ]);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -444,6 +453,7 @@ export default function KontribusiPage() {
         body: JSON.stringify({
           lemma: word,
           language_id: sambas?.id,
+          ...(defaultDialectId ? { dialect_id: defaultDialectId } : {}),
           word_type: 'word',
           meanings: maknaList.map((m, i) => ({
             word_class_id: m.wordClassId,
@@ -477,7 +487,7 @@ export default function KontribusiPage() {
       });
       setSuccess(word);
       setLemma('');
-      setMaknaList([{ ...emptyMakna }]);
+      setMaknaList([{ ...emptyMakna, wordClassId: umumWordClassId }]);
     } catch (err) {
       if (err instanceof AppError && err.details?.length) {
         setError(err.details.map((d) => d.message).join('. '));
@@ -604,7 +614,9 @@ export default function KontribusiPage() {
                 variant="light"
                 color="gray"
                 leftSection={<Plus size={16} />}
-                onClick={() => setMaknaList((list) => [...list, { ...emptyMakna }])}
+                onClick={() =>
+                  setMaknaList((list) => [...list, { ...emptyMakna, wordClassId: umumWordClassId }])
+                }
               >
                 Tambah Makna Lain
               </Button>

@@ -55,6 +55,10 @@ export function Footer() {
       <Stack gap={4} align="center">
         <Text size="xs" c="dimmed" ta="center">
           © {currentYear} SambasKu. Didukung oleh penutur asli dan pegiat bahasa.
+          {' · '}
+          <Anchor component={Link} to="/hapus-akun" size="xs" c="dimmed">
+            Hapus akun
+          </Anchor>
         </Text>
         <Group gap={4} wrap="nowrap">
           <Text size="xs" c="dimmed">
