@@ -16,7 +16,7 @@ const SECURITY_HEADERS: Readonly<Record<string, string>> = {
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
   'Content-Security-Policy':
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https: blob:; media-src 'self' https: blob:; connect-src 'self' https://sambasku.iamutaki.com https://sambasku-staging.iamutaki.com; frame-ancestors 'none'",
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https: blob:; media-src 'self' https: blob:; connect-src 'self' https://api.sambasku.com https://sambasku-staging.iamutaki.com; frame-ancestors 'none'",
 };
 
 // ==== Edge cache HTML SSR (stale-while-revalidate) ====

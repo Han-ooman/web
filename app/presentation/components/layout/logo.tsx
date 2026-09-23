@@ -21,7 +21,7 @@ export function Logo({ h, eager }: LogoProps) {
   return (
     <>
       <Image
-        src="/logo_hor_dark.png"
+        src="/logo_hor_dark.webp"
         alt="SambasKu"
         h={h}
         w="auto"
@@ -31,7 +31,7 @@ export function Logo({ h, eager }: LogoProps) {
         {...loadProps}
       />
       <Image
-        src="/logo_hor_light.png"
+        src="/logo_hor_light.webp"
         alt="SambasKu"
         h={h}
         w="auto"

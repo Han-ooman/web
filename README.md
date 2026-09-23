@@ -40,8 +40,8 @@ Dev: Vite mem-proxy `/api` ke API staging (same-origin, bebas CORS).
 
 | Jenis | Sumber |
 | --- | --- |
-| Gambar kata / avatar | [sambasku-images](https://github.com/iamutaki/sambasku-images) via jsDelivr; tampilan di-resize lewat wsrv (`displayImageUrl`) |
-| Audio pelafalan | [sambasku-pronunciation](https://github.com/iamutaki/sambasku-pronunciation) via jsDelivr |
+| Gambar kata / avatar | [sambasku/images](https://github.com/sambasku/images) via jsDelivr; tampilan di-resize lewat wsrv (`displayImageUrl`) |
+| Audio pelafalan | [sambasku/audios](https://github.com/sambasku/audios) via jsDelivr |
 
 ## Struktur singkat
 
