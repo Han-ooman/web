@@ -17,10 +17,10 @@ export function Footer() {
         </Group>
 
         <Group gap="lg" justify="center">
-          <Anchor component={Link} to="/words" size="xs" c="dimmed">
+          <Anchor component={Link} to="/words" size="xs" c="dimmed" py={4}>
             Daftar A-Z
           </Anchor>
-          <Anchor component={Link} to="/search" size="xs" c="dimmed">
+          <Anchor component={Link} to="/search" size="xs" c="dimmed" py={4}>
             Pencarian
           </Anchor>
           <Anchor

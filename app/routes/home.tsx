@@ -66,7 +66,7 @@ export default function Home() {
         {/* Word of the Day Section */}
         {wordOfDay.word && (
           <Stack gap="xs">
-            <Title order={5} c="dimmed" tt="uppercase" fw={600}>
+            <Title order={2} size="h5" c="dimmed" tt="uppercase" fw={600}>
               Sorotan Hari Ini
             </Title>
             <WordOfTheDayCard wordOfDay={wordOfDay} />
@@ -76,10 +76,10 @@ export default function Home() {
         {/* A-Z Quick Browsing */}
         <Stack gap="sm">
           <Group justify="space-between">
-            <Title order={5} c="dimmed" tt="uppercase" fw={600}>
+            <Title order={2} size="h5" c="dimmed" tt="uppercase" fw={600}>
               Jelajah Alfabetis (A-Z)
             </Title>
-            <Anchor component={Link} to="/words" size="xs" c="dimmed">
+            <Anchor component={Link} to="/words" size="xs" c="dimmed" py={4}>
               Lihat semua kata
             </Anchor>
           </Group>
@@ -105,7 +105,7 @@ export default function Home() {
         <Card withBorder padding="lg" radius="md">
           <Group justify="space-between" align="center" gap="lg" wrap="wrap">
             <Stack gap={4} maw={520}>
-              <Title order={4}>
+              <Title order={3} size="h4">
                 Tahu kata Sambas yang belum tercatat?
               </Title>
               <Text size="sm" c="dimmed">

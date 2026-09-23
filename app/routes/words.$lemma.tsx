@@ -218,7 +218,7 @@ export default function WordDetailPage() {
         <Stack gap="md">
           <Group gap="xs">
             <BookOpen size={16} />
-            <Title order={5} c="dimmed" tt="uppercase" fw={700}>
+            <Title order={2} size="h5" c="dimmed" tt="uppercase" fw={700}>
               Makna &amp; Definisi ({word.meanings.length})
             </Title>
           </Group>
@@ -301,7 +301,7 @@ export default function WordDetailPage() {
             <Divider />
             <Group gap="xs">
               <Sparkles size={16} />
-              <Title order={5} c="dimmed" tt="uppercase" fw={700}>
+              <Title order={2} size="h5" c="dimmed" tt="uppercase" fw={700}>
                 Kata Terkait &amp; Sinonim
               </Title>
             </Group>
@@ -330,7 +330,7 @@ export default function WordDetailPage() {
             <Divider />
             <Group gap="xs">
               <Layers size={16} />
-              <Title order={5} c="dimmed" tt="uppercase" fw={700}>
+              <Title order={2} size="h5" c="dimmed" tt="uppercase" fw={700}>
                 Variasi &amp; Bentukan Kata
               </Title>
             </Group>
