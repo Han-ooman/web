@@ -12,7 +12,7 @@ import {
   ThemeIcon,
   Title,
 } from '@mantine/core';
-import { Search, AlertCircle, PlusCircle, ExternalLink, ArrowRight } from 'lucide-react';
+import { Search, AlertCircle, PlusCircle, ArrowRight } from 'lucide-react';
 import type { Route } from './+types/search';
 import { searchWords } from '../application/use-cases/word.use-case';
 import { buildMetaTags } from '../application/utils/seo';
@@ -151,7 +151,7 @@ export default function SearchPage() {
               Ketik kata kunci untuk memulai
             </Title>
             <Text size="sm" c="dimmed" maw={400} ta="center">
-              Kamu bisa mencari kata dalam bahasa Sambas atau mencari padanan dari
+              Kamu bisa mencari kata dalam bahasa Sambas atau mencari terjemahan dari
               bahasa Indonesia.
             </Text>
           </Stack>
@@ -200,13 +200,10 @@ export default function SearchPage() {
               </Text>
 
               <Button
-                component="a"
-                href="https://sambasku.iamutaki.com"
-                target="_blank"
-                rel="noreferrer"
+                component={Link}
+                to={`/kontribusi?q=${encodeURIComponent(q)}`}
                 variant="light"
                 leftSection={<PlusCircle size={16} />}
-                rightSection={<ExternalLink size={14} />}
                 mt="xs"
               >
                 Ajukan Kata Ini ke Kamus

@@ -33,17 +33,20 @@ const theme = createTheme({
 });
 
 export const links: Route.LinksFunction = () => [
-  { rel: 'icon', href: '/logo.png', type: 'image/png' },
+  // Satu favicon, 192px (48×4). Google Search menolak ikon yang bukan
+  // kelipatan 48px. logo.png 512px plus wordmark tidak pernah tampil
+  // di hasil pencarian. /favicon.ico (48px, emblem yang sama) tetap
+  // ada untuk browser yang meminta path itu.
+  { rel: 'icon', href: '/favicon-192.png', type: 'image/png', sizes: '192x192' },
   { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
-  { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+  // Font self-host (lihat app.css) - preload woff2 utama biar LCP tidak
+  // menunggu CSS parse dulu sebelum font ditemukan.
   {
-    rel: 'preconnect',
-    href: 'https://fonts.gstatic.com',
+    rel: 'preload',
+    href: '/fonts/pjs-latin-var.woff2',
+    as: 'font',
+    type: 'font/woff2',
     crossOrigin: 'anonymous',
-  },
-  {
-    rel: 'stylesheet',
-    href: 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400..800;1,400..800&display=swap',
   },
 ];
 

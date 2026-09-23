@@ -8,7 +8,7 @@ export function WordCard({ word }: { word: WordSummary }) {
   return (
     <Card
       component={Link}
-      to={`/words/${word.id}`}
+      to={`/words/${encodeURIComponent(word.lemma)}`}
       withBorder
       padding="sm"
       radius="md"
@@ -19,7 +19,7 @@ export function WordCard({ word }: { word: WordSummary }) {
           <Text fw={600} size="lg" component="span">
             {word.lemma}
           </Text>
-          {word.is_verified && (
+          {word.is_verified ? (
             <Badge
               size="sm"
               variant="light"
@@ -27,6 +27,10 @@ export function WordCard({ word }: { word: WordSummary }) {
               leftSection={<CheckCircle2 size={13} />}
             >
               Terverifikasi
+            </Badge>
+          ) : (
+            <Badge size="sm" variant="light" color="yellow">
+              Menunggu pengecekan
             </Badge>
           )}
           <WordTypeBadge type={word.word_type} />

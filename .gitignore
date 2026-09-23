@@ -1,5 +1,7 @@
 node_modules
 /.react-router
+# Cache incremental tsc - jangan pernah masuk repo (CI aneh + konflik merge)
+tsconfig.tsbuildinfo
 /build
 /dist
 .wrangler

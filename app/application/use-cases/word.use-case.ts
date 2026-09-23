@@ -79,3 +79,31 @@ export async function getWordDetail(id: string, signal?: AbortSignal): Promise<W
   const res = await apiClient<WordDetail>(`/words/${encodeURIComponent(id)}`, { signal });
   return res.data;
 }
+
+export async function getWordByLemma(lemma: string, signal?: AbortSignal): Promise<WordDetail> {
+  const res = await apiClient<WordDetail>(`/words/lemma/${encodeURIComponent(lemma)}`, {
+    signal,
+  });
+  return res.data;
+}
+
+export interface KbbiSuggestion {
+  id: string;
+  lemma: string;
+  word_class_code: string | null;
+  word_class_label: string | null;
+  definition: string;
+  preview: string;
+}
+
+/** Lookup definisi KBBI (publik) untuk prefill form kontribusi. */
+export async function lookupKbbi(
+  lemma: string,
+  signal?: AbortSignal,
+): Promise<KbbiSuggestion[]> {
+  const res = await apiClient<{ found: boolean; suggestions: KbbiSuggestion[] }>(
+    `/lemma-definitions/lookup?lemma=${encodeURIComponent(lemma)}`,
+    { signal },
+  );
+  return res.data.suggestions;
+}

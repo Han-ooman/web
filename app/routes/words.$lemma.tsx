@@ -27,10 +27,12 @@ import {
   Sparkles,
   Volume2,
 } from 'lucide-react';
-import type { Route } from './+types/words.$id';
-import { getWordDetail } from '@/application/use-cases/word.use-case';
+import type { Route } from './+types/words.$lemma';
+import { redirect } from 'react-router';
+import { getWordByLemma, getWordDetail } from '@/application/use-cases/word.use-case';
 import { buildMetaTags, buildWordJsonLd } from '@/application/utils/seo';
 import { env } from '@/infrastructure/config/env';
+import { displayImageUrl } from '@/presentation/utils/display-image-url';
 import { WordTypeBadge } from '@/presentation/components/word/word-type-badge';
 import { WordAudioPlayer } from '@/presentation/components/word/pronunciation-player';
 import { formatWordClass } from '@/application/utils/formatters';
@@ -48,27 +50,37 @@ export function meta({ data }: Route.MetaArgs) {
   const firstMeaning = word.meanings[0];
   const definition =
     firstMeaning?.definition ?? `Pelajari arti kata ${word.lemma} dalam bahasa Sambas.`;
-  const primaryImage = word.images.find((img) => img.is_primary)?.url ?? word.images[0]?.url;
+  const rawImage = word.images.find((img) => img.is_primary)?.url ?? word.images[0]?.url;
+  const primaryImage = displayImageUrl(rawImage, { width: 1200 }) ?? rawImage;
 
   return buildMetaTags({
-    title: `${word.lemma} - Arti Kata Bahasa Sambas`,
+    title: `${word.lemma} - Arti di Kamus Sambas`,
     description: `${word.lemma}: ${definition}`,
-    path: `/words/${word.id}`,
+    path: `/words/${encodeURIComponent(word.lemma)}`,
     image: primaryImage,
     type: 'article',
   });
 }
 
+// ULID Crockford base32 - 26 karakter. URL lama /words/<ulid> masih
+// beredar (backlink/search engine) → 301 permanen ke /words/<lemma>.
+const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+
 export async function loader({ params, request }: Route.LoaderArgs) {
-  const { id } = params;
-  if (!id) {
-    throw new Response('ID kata tidak valid', { status: 400 });
+  const { lemma } = params;
+  if (!lemma) {
+    throw new Response('Lemma kata tidak valid', { status: 400 });
   }
 
   try {
-    const word = await getWordDetail(id, request.signal);
+    if (ULID_RE.test(lemma)) {
+      const word = await getWordDetail(lemma, request.signal);
+      throw redirect(`/words/${encodeURIComponent(word.lemma)}`, 301);
+    }
+    const word = await getWordByLemma(lemma, request.signal);
     return { word };
   } catch (error) {
+    if (error instanceof Response) throw error; // redirect 301 lolos
     const status = (error as { statusCode?: number }).statusCode ?? 404;
     throw new Response('Kata tidak ditemukan', { status });
   }
@@ -154,18 +166,21 @@ export default function WordDetailPage() {
               <Title order={1} fw={800}>
                 {word.lemma}
               </Title>
-              {word.is_verified && (
-                <Badge
-                  size="sm"
-                  variant="light"
-                  color="teal"
-                  leftSection={<CheckCircle2 size={13} />}
-                >
-                  Terverifikasi
-                </Badge>
-              )}
+              <Badge
+                size="sm"
+                variant="light"
+                color={word.is_verified ? 'teal' : 'yellow'}
+                leftSection={word.is_verified ? <CheckCircle2 size={13} /> : undefined}
+              >
+                {word.is_verified ? 'Terverifikasi' : 'Menunggu pengecekan'}
+              </Badge>
               <WordTypeBadge type={word.word_type} />
             </Group>
+            {!word.is_verified ? (
+              <Text size="sm" c="dimmed">
+                Kata ini belum diperiksa tim Sambasku. Artinya atau terjemahannya bisa saja kurang tepat.
+              </Text>
+            ) : null}
 
             {/* Notasi IPA (teks) + audio multi-take dari word_audios */}
             {word.pronunciations.length > 0 && (
@@ -206,7 +221,7 @@ export default function WordDetailPage() {
         <Stack gap="md">
           <Group gap="xs">
             <BookOpen size={16} />
-            <Title order={5} c="dimmed" tt="uppercase" fw={700}>
+            <Title order={2} size="h5" c="dimmed" tt="uppercase" fw={700}>
               Makna &amp; Definisi ({word.meanings.length})
             </Title>
           </Group>
@@ -289,7 +304,7 @@ export default function WordDetailPage() {
             <Divider />
             <Group gap="xs">
               <Sparkles size={16} />
-              <Title order={5} c="dimmed" tt="uppercase" fw={700}>
+              <Title order={2} size="h5" c="dimmed" tt="uppercase" fw={700}>
                 Kata Terkait &amp; Sinonim
               </Title>
             </Group>
@@ -298,7 +313,7 @@ export default function WordDetailPage() {
                 <Badge
                   key={rel.word_id}
                   component={Link}
-                  to={`/words/${rel.word_id}`}
+                  to={`/words/${encodeURIComponent(rel.lemma)}`}
                   size="lg"
                   variant="outline"
                 >
@@ -318,7 +333,7 @@ export default function WordDetailPage() {
             <Divider />
             <Group gap="xs">
               <Layers size={16} />
-              <Title order={5} c="dimmed" tt="uppercase" fw={700}>
+              <Title order={2} size="h5" c="dimmed" tt="uppercase" fw={700}>
                 Variasi &amp; Bentukan Kata
               </Title>
             </Group>
@@ -332,6 +347,41 @@ export default function WordDetailPage() {
                 </Badge>
               ))}
             </Group>
+          </Stack>
+        )}
+
+        {(word.created_by?.username || word.verified_by?.username) && (
+          <Stack gap={4}>
+            <Divider />
+            {word.created_by?.username &&
+            word.verified_by?.username &&
+            word.created_by.username === word.verified_by.username ? (
+              <Group gap={6} wrap="wrap">
+                <Text size="xs" c="dimmed">
+                  Dibuat dan diverifikasi oleh {word.created_by.username}
+                </Text>
+                {['admin', 'editor', 'root', 'reviewer'].includes(
+                  word.verified_by.role,
+                ) ? (
+                  <Badge size="xs" variant="light">
+                    Verifikator
+                  </Badge>
+                ) : null}
+              </Group>
+            ) : (
+              <>
+                {word.created_by?.username ? (
+                  <Text size="xs" c="dimmed">
+                    Dibuat oleh {word.created_by.username}
+                  </Text>
+                ) : null}
+                {word.is_verified && word.verified_by?.username ? (
+                  <Text size="xs" c="dimmed">
+                    Diverifikasi oleh {word.verified_by.username}
+                  </Text>
+                ) : null}
+              </>
+            )}
           </Stack>
         )}
 

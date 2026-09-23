@@ -11,20 +11,25 @@ import {
   Text,
   Title,
 } from '@mantine/core';
-import { Sparkles, ExternalLink, PlusCircle } from 'lucide-react';
+import { Sparkles, PlusCircle } from 'lucide-react';
 import type { Route } from './+types/home';
 import { getWordOfDay } from '../application/use-cases/word.use-case';
-import { buildMetaTags } from '../application/utils/seo';
+import { buildHomeJsonLd, buildMetaTags } from '../application/utils/seo';
+import { env } from '../infrastructure/config/env';
 import { SearchBar } from '../presentation/components/word/search-bar';
 import { WordOfTheDayCard } from '../presentation/components/word/word-of-the-day-card';
 
 export function meta(_args: Route.MetaArgs) {
-  return buildMetaTags({
-    title: 'Kamus Digital Sambas-Indonesia',
-    description:
-      'Pusat dokumentasi dan pencarian kosakata, makna, terjemahan, dan peribahasa bahasa Melayu Sambas secara terbuka dan kolaboratif.',
-    path: '/',
-  });
+  return [
+    ...buildMetaTags({
+      title: 'Kamus Sambas',
+      description:
+        'Kamus Sambas untuk mencari kosakata, makna, terjemahan, dan peribahasa bahasa Melayu Sambas ke bahasa Indonesia. Terbuka dan kolaboratif.',
+      path: '/',
+    }),
+    // Hanya produksi. Staging noindex, jadi entitas ini tidak boleh ikut terbit.
+    ...(env.isProd ? [{ 'script:ld+json': buildHomeJsonLd() }] : []),
+  ];
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -48,11 +53,11 @@ export default function Home() {
             leftSection={<Sparkles size={13} />}
             size="sm"
           >
-            Kamus Digital Terbuka &amp; Terverifikasi
+            Kamus Digital Terbuka Bahasa Sambas
           </Badge>
 
           <Title order={1} ta="center" fw={800}>
-            Pusat Kosakata Bahasa Sambas
+            Kamus Sambas
           </Title>
 
           <Text c="dimmed" size="lg" ta="center" maw={560}>
@@ -66,7 +71,7 @@ export default function Home() {
         {/* Word of the Day Section */}
         {wordOfDay.word && (
           <Stack gap="xs">
-            <Title order={5} c="dimmed" tt="uppercase" fw={600}>
+            <Title order={2} size="h5" c="dimmed" tt="uppercase" fw={600}>
               Sorotan Hari Ini
             </Title>
             <WordOfTheDayCard wordOfDay={wordOfDay} />
@@ -76,10 +81,10 @@ export default function Home() {
         {/* A-Z Quick Browsing */}
         <Stack gap="sm">
           <Group justify="space-between">
-            <Title order={5} c="dimmed" tt="uppercase" fw={600}>
+            <Title order={2} size="h5" c="dimmed" tt="uppercase" fw={600}>
               Jelajah Alfabetis (A-Z)
             </Title>
-            <Anchor component={Link} to="/words" size="xs" c="dimmed">
+            <Anchor component={Link} to="/words" size="xs" c="dimmed" py={4}>
               Lihat semua kata
             </Anchor>
           </Group>
@@ -105,7 +110,7 @@ export default function Home() {
         <Card withBorder padding="lg" radius="md">
           <Group justify="space-between" align="center" gap="lg" wrap="wrap">
             <Stack gap={4} maw={520}>
-              <Title order={4}>
+              <Title order={3} size="h4">
                 Tahu kata Sambas yang belum tercatat?
               </Title>
               <Text size="sm" c="dimmed">
@@ -115,13 +120,10 @@ export default function Home() {
             </Stack>
 
             <Button
-              component="a"
-              href="https://sambasku.iamutaki.com"
-              target="_blank"
-              rel="noreferrer"
+              component={Link}
+              to="/kontribusi"
               variant="light"
               leftSection={<PlusCircle size={16} />}
-              rightSection={<ExternalLink size={14} />}
             >
               Ajukan Kata Baru
             </Button>

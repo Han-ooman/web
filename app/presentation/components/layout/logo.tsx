@@ -1,4 +1,4 @@
-import { Image, useComputedColorScheme } from '@mantine/core';
+import { Image } from '@mantine/core';
 
 interface LogoProps {
   h: number;
@@ -6,22 +6,40 @@ interface LogoProps {
   eager?: boolean;
 }
 
+/**
+ * Dua varian logo dirender bersamaan, satu disembunyikan via CSS
+ * (lightHidden/darkHidden) berdasarkan data-mantine-color-scheme yang
+ * dipasang ColorSchemeScript SEBELUM hidrasi - jadi tidak pernah salah
+ * varian pada frame pertama (beda dengan pendekatan hook yang ganti
+ * gambar SETELAH efek jalan = flash logo terang di tema dark).
+ */
 export function Logo({ h, eager }: LogoProps) {
-  const colorScheme = useComputedColorScheme('light', {
-    getInitialValueInEffect: true,
-  });
+  const loadProps = eager
+    ? { fetchPriority: 'high' as const }
+    : { loading: 'lazy' as const };
 
   return (
-    <Image
-      src={colorScheme === 'dark' ? '/logo_hor_dark.png' : '/logo_hor_light.png'}
-      alt="SambasKu"
-      h={h}
-      w="auto"
-      fit="contain"
-      decoding="async"
-      // ponytail: fetchPriority React 19; ganti ke loading=lazy saja kalau
-      // turun versi React.
-      {...(eager ? { fetchPriority: 'high' as const } : { loading: 'lazy' })}
-    />
+    <>
+      <Image
+        src="/logo_hor_dark.png"
+        alt="SambasKu"
+        h={h}
+        w="auto"
+        fit="contain"
+        decoding="async"
+        lightHidden
+        {...loadProps}
+      />
+      <Image
+        src="/logo_hor_light.png"
+        alt="SambasKu"
+        h={h}
+        w="auto"
+        fit="contain"
+        decoding="async"
+        darkHidden
+        {...loadProps}
+      />
+    </>
   );
 }

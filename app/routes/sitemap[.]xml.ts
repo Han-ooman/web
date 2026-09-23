@@ -17,7 +17,7 @@ export async function loader() {
   try {
     const res = await listWordsAtoZ({ limit: 100 });
     wordEntries = res.data.map((word) => ({
-      path: `/words/${word.id}`,
+      path: `/words/${encodeURIComponent(word.lemma)}`,
       priority: '0.7',
       changefreq: 'weekly',
     }));

@@ -1,0 +1,623 @@
+import { useEffect, useState } from 'react';
+import { Link, useLoaderData, useSearchParams } from 'react-router';
+import {
+  ActionIcon,
+  Alert,
+  Anchor,
+  Box,
+  Button,
+  Card,
+  Container,
+  Divider,
+  Group,
+  Modal,
+  Skeleton,
+  Paper,
+  Select,
+  Stack,
+  Text,
+  Textarea,
+  TextInput,
+  ThemeIcon,
+  Title,
+  Tooltip,
+} from '@mantine/core';
+import { BookOpenText, Check, Info, Plus, Send, Trash2 } from 'lucide-react';
+import type { Route } from './+types/kontribusi';
+import { buildMetaTags } from '../application/utils/seo';
+import {
+  lookupKbbi,
+  searchWords,
+  type KbbiSuggestion,
+} from '../application/use-cases/word.use-case';
+import { AppError, apiClient } from '../infrastructure/api/api-client';
+import type { WordSummary } from '../domain/entities/word.entity';
+import {
+  listLanguages,
+  listWordClasses,
+  pickIndonesianLanguage,
+  pickSambasLanguage,
+} from '../application/use-cases/reference.use-case';
+
+export function meta(_args: Route.MetaArgs) {
+  return buildMetaTags({
+    title: 'Kontribusi Kata',
+    description:
+      'Bantu pelestarian bahasa Sambas: kirim kata, makna, terjemahan, atau contoh baru untuk diverifikasi tim kamus.',
+    path: '/kontribusi',
+    // Halaman form = thin content, jangan diperebutkan di search engine.
+    noindexAlways: true,
+  });
+}
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const [languages, wordClasses] = await Promise.all([
+    listLanguages(request.signal),
+    listWordClasses(request.signal),
+  ]);
+  return { languages, wordClasses };
+}
+
+interface MaknaForm {
+  wordClassId: string;
+  definition: string;
+  padanan: string;
+  contoh: string;
+}
+
+const emptyMakna: MaknaForm = { wordClassId: '', definition: '', padanan: '', contoh: '' };
+
+// Kode kelas kata KBBI lebih pendek dari DB (a vs adj, p vs part) -
+// alias + fallback nama label agar auto-fill tetap jalan.
+const KBBI_CODE_ALIASES: Record<string, string> = { a: 'adj', p: 'part' };
+
+function matchWordClass(
+  s: KbbiSuggestion,
+  wordClasses: { id: string; code: string; name: string }[],
+) {
+  const code = KBBI_CODE_ALIASES[s.word_class_code ?? ''] ?? s.word_class_code;
+  return (
+    (code ? wordClasses.find((w) => w.code === code) : undefined) ??
+    (s.word_class_label
+      ? wordClasses.find((w) => w.name.toLowerCase() === s.word_class_label!.toLowerCase())
+      : undefined)
+  );
+}
+
+
+/**
+ * Modal pencarian KBBI - padanan web untuk bottom sheet (mobile) dan
+ * modal (admin). Buka lewat ikon buku di samping field padanan.
+ */
+function KbbiLookupModal({
+  opened,
+  onClose,
+  onSelect,
+  initialQuery = '',
+}: {
+  opened: boolean;
+  onClose: () => void;
+  onSelect: (s: KbbiSuggestion) => void;
+  initialQuery?: string;
+}) {
+  const [query, setQuery] = useState(initialQuery);
+  const [results, setResults] = useState<KbbiSuggestion[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+
+  // useState(initialQuery) cuma jalan sekali - sync ulang tiap modal dibuka
+  useEffect(() => {
+    if (opened) setQuery(initialQuery);
+  }, [opened, initialQuery]);
+
+  useEffect(() => {
+    if (!opened) return;
+    const q = query.trim();
+    if (q.length < 2) {
+      setResults([]);
+      setError(false);
+      return;
+    }
+    setLoading(true);
+    setError(false);
+    const timer = setTimeout(async () => {
+      try {
+        setResults(await lookupKbbi(q));
+      } catch {
+        setError(true);
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [query, opened]);
+
+  return (
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title="Cari di KBBI"
+      size="lg"
+      centered
+    >
+      <Stack gap="sm">
+        <TextInput
+          data-autofocus
+          placeholder="Kata bahasa Indonesia, mis. makan"
+          value={query}
+          onChange={(e) => setQuery(e.currentTarget.value)}
+          leftSection={<BookOpenText size={16} />}
+        />
+
+        {loading && (
+          <Stack gap={4}>
+            <Skeleton height={44} radius="sm" />
+            <Skeleton height={44} radius="sm" />
+            <Skeleton height={44} radius="sm" />
+          </Stack>
+        )}
+
+        {error && (
+          <Text size="sm" c="red">
+            Gagal menghubungi KBBI. Coba lagi sebentar.
+          </Text>
+        )}
+
+        {!loading && !error && query.trim().length >= 2 && results.length === 0 && (
+          <Text size="sm" c="dimmed">
+            Tidak ditemukan di KBBI. Isi definisi secara manual.
+          </Text>
+        )}
+
+        <Stack gap={4}>
+          {results.map((s) => (
+            <Paper
+              key={s.id}
+              component="button"
+              type="button"
+              withBorder
+              radius="sm"
+              p="sm"
+              onClick={() => {
+                onSelect(s);
+                onClose();
+              }}
+              style={{ textAlign: 'left', cursor: 'pointer' }}
+            >
+              <Group gap="xs" align="baseline" wrap="nowrap">
+                <Text size="xs" fw={600} c="dimmed" style={{ whiteSpace: 'nowrap' }}>
+                  {s.word_class_label ?? '-'}
+                </Text>
+                <Text size="sm" lineClamp={2}>
+                  {s.definition}
+                </Text>
+              </Group>
+            </Paper>
+          ))}
+        </Stack>
+
+        <Box />
+      </Stack>
+    </Modal>
+  );
+}
+
+/** Satu kartu makna + trigger KBBI (debounce di field padanan Indonesia). */
+function MaknaCard({
+  index,
+  value,
+  wordClassOptions,
+  wordClasses,
+  onChange,
+  onRemove,
+  canRemove,
+}: {
+  index: number;
+  value: MaknaForm;
+  wordClassOptions: { value: string; label: string }[];
+  wordClasses: { id: string; code: string; name: string }[];
+  onChange: (v: MaknaForm) => void;
+  onRemove: () => void;
+  canRemove: boolean;
+}) {
+  const [kbbi, setKbbi] = useState<KbbiSuggestion[]>([]);
+  const [kbbiLoading, setKbbiLoading] = useState(false);
+  const [kbbiOpen, setKbbiOpen] = useState(false);
+
+  // Trigger KBBI: user isi padanan Indonesia → cari definisi KBBI-nya
+  // untuk prefill. Best-effort; gagal = diam (tidak mengganggu form).
+  useEffect(() => {
+    const q = value.padanan.trim();
+    if (q.length < 2) {
+      setKbbi([]);
+      return;
+    }
+    setKbbiLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        setKbbi(await lookupKbbi(q));
+      } catch {
+        setKbbi([]);
+      } finally {
+        setKbbiLoading(false);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [value.padanan]);
+
+  function applySuggestion(s: KbbiSuggestion) {
+    const wc = matchWordClass(s, wordClasses);
+    onChange({
+      ...value,
+      wordClassId: wc?.id ?? value.wordClassId,
+      definition: s.definition,
+    });
+    setKbbi([]);
+  }
+
+  return (
+    <Paper withBorder radius="md" p="md">
+      <Group justify="space-between" mb="md">
+        <Text fw={600} size="sm" c="dimmed">
+          Makna {index + 1}
+        </Text>
+        {canRemove && (
+          <Tooltip label="Hapus makna ini">
+            <ActionIcon color="red" variant="subtle" onClick={onRemove} aria-label="Hapus makna">
+              <Trash2 size={16} />
+            </ActionIcon>
+          </Tooltip>
+        )}
+      </Group>
+
+      <Stack gap="md">
+        <Group grow align="flex-start" wrap="wrap">
+          <Select
+            // key: Select searchable menyimpan teks input secara internal
+            // dan tidak ikut bersih saat value direset dari luar (bug reset
+            // pasca-submit) - remount saat kosong menjamin tampilan bersih.
+            key={`wc-${value.wordClassId || 'empty'}`}
+            label="Kelas kata"
+            placeholder="Pilih kelas kata"
+            required
+            searchable
+            data={wordClassOptions}
+            value={value.wordClassId}
+            onChange={(v) => onChange({ ...value, wordClassId: v ?? '' })}
+            style={{ minWidth: 180 }}
+          />
+          <TextInput
+            label="Terjemahan Indonesia"
+            placeholder="mis. makan"
+            value={value.padanan}
+            onChange={(e) => onChange({ ...value, padanan: e.currentTarget.value })}
+            style={{ minWidth: 180 }}
+            rightSectionWidth={44}
+            rightSection={
+              <Tooltip label="Cari definisi di KBBI" position="top" withArrow>
+                <ActionIcon
+                  variant="subtle"
+                  onClick={() => setKbbiOpen(true)}
+                  aria-label="Cari definisi di KBBI"
+                  style={{ marginRight: 6 }}
+                >
+                  <BookOpenText size={16} />
+                </ActionIcon>
+              </Tooltip>
+            }
+          />
+        </Group>
+
+        {/* Hint di baris sendiri (bukan description field) supaya layout
+            horizontal Select + TextInput tidak bergeser oleh teks panjang. */}
+        <Text size="xs" c="dimmed" mt={-8}>
+          Ketik kata Indonesia - saran definisi KBBI muncul otomatis, atau klik
+          ikon buku untuk mencari sendiri.
+        </Text>
+
+        <KbbiLookupModal
+          opened={kbbiOpen}
+          onClose={() => setKbbiOpen(false)}
+          initialQuery={value.padanan.trim()}
+          onSelect={(s) => {
+            const wc = matchWordClass(s, wordClasses);
+            onChange({
+              ...value,
+              wordClassId: wc?.id ?? value.wordClassId,
+              definition: s.definition,
+              // Pilihan di modal adalah kata yang dicari, bukan isi field
+              // sebelumnya. "makan" lalu pilih "minum" harus menimpa field.
+              padanan: s.lemma.trim() || value.padanan,
+            });
+          }}
+        />
+
+        {(kbbi.length > 0 || kbbiLoading) && (
+          <Paper withBorder radius="sm" p="sm" bg="var(--mantine-color-body)">
+            <Group gap="xs" mb={6}>
+              <BookOpenText size={14} />
+              <Text size="xs" fw={600} c="dimmed">
+                {kbbiLoading
+                  ? 'Mencari di KBBI…'
+                  : 'Definisi KBBI - klik untuk isi otomatis'}
+              </Text>
+            </Group>
+            <Stack gap={2}>
+              {kbbiLoading && <Skeleton height={14} radius="sm" mt={4} />}
+              {kbbi.slice(0, 4).map((s) => (
+                <Anchor
+                  key={s.id}
+                  component="button"
+                  type="button"
+                  size="sm"
+                  onClick={() => applySuggestion(s)}
+                  ta="left"
+                  underline="never"
+                  px={6}
+                  py={4}
+                  style={{ borderRadius: 'var(--mantine-radius-sm)' }}
+                >
+                  <Text span size="xs" c="dimmed" mr={4}>
+                    {s.word_class_label ?? '-'}
+                  </Text>
+                  {s.preview}
+                </Anchor>
+              ))}
+            </Stack>
+          </Paper>
+        )}
+
+        <Textarea
+          label="Definisi"
+          placeholder="Arti kata dalam bahasa Indonesia"
+          required
+          minRows={2}
+          value={value.definition}
+          onChange={(e) => onChange({ ...value, definition: e.currentTarget.value })}
+        />
+
+        <Textarea
+          label="Contoh kalimat (opsional)"
+          description="Pemakaian dalam kalimat bahasa Sambas - sangat membantu verifikator"
+          placeholder="mis. kalimat pemakaian kata ini"
+          autosize
+          minRows={2}
+          value={value.contoh}
+          onChange={(e) => onChange({ ...value, contoh: e.currentTarget.value })}
+        />
+      </Stack>
+    </Paper>
+  );
+}
+
+export default function KontribusiPage() {
+  const { languages, wordClasses } = useLoaderData<typeof loader>();
+  const [searchParams] = useSearchParams();
+  const sambas = pickSambasLanguage(languages);
+  const indonesia = pickIndonesianLanguage(languages);
+
+  const [lemma, setLemma] = useState(searchParams.get('q')?.trim() ?? '');
+  const [maknaList, setMaknaList] = useState<MaknaForm[]>([{ ...emptyMakna }]);
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // ==== Cek duplikat live (debounce 400ms) ====
+  // Lemma yang sudah tayang → tawarkan lihat halamannya / ajukan makna
+  // baru (verifikator menggabungkan, bukan menolak).
+  const [similar, setSimilar] = useState<WordSummary[]>([]);
+  useEffect(() => {
+    const q = lemma.trim();
+    if (q.length < 2) {
+      setSimilar([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await searchWords({ q, searchIn: 'lemma', limit: 5 });
+        setSimilar(res.data);
+      } catch {
+        setSimilar([]);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [lemma]);
+
+  const exact = similar.find(
+    (w) => w.lemma.trim().toLowerCase() === lemma.trim().toLowerCase(),
+  );
+
+  const wordClassOptions = wordClasses.map((wc) => ({
+    value: wc.id,
+    label: wc.alias ? `${wc.name} (${wc.alias})` : wc.name,
+  }));
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSubmitting(true);
+    try {
+      const word = lemma.trim();
+      await apiClient('/contributions/words', {
+        method: 'POST',
+        body: JSON.stringify({
+          lemma: word,
+          language_id: sambas?.id,
+          word_type: 'word',
+          meanings: maknaList.map((m, i) => ({
+            word_class_id: m.wordClassId,
+            definition: m.definition.trim(),
+            is_have_definition: true,
+            is_have_translation: m.padanan.trim().length > 0,
+            order_index: i + 1,
+            translations: m.padanan.trim()
+              ? [
+                  {
+                    language_id: indonesia?.id,
+                    translation_text: m.padanan.trim(),
+                    translation_type: 'direct' as const,
+                  },
+                ]
+              : [],
+            ...(m.contoh.trim()
+              ? {
+                  examples: [
+                    {
+                      source_language_id: sambas?.id,
+                      source_sentence: m.contoh.trim(),
+                      target_language_id: indonesia?.id,
+                      source_type: 'native_speaker',
+                    },
+                  ],
+                }
+              : {}),
+          })),
+        }),
+      });
+      setSuccess(word);
+      setLemma('');
+      setMaknaList([{ ...emptyMakna }]);
+    } catch (err) {
+      if (err instanceof AppError && err.details?.length) {
+        setError(err.details.map((d) => d.message).join('. '));
+      } else {
+        setError(err instanceof Error ? err.message : 'Gagal mengirim kontribusi.');
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Container size="sm" py="xl">
+      <Stack gap="lg">
+        <Title order={1} ta="center">
+          Kontribusi Kata
+        </Title>
+        <Text c="dimmed" ta="center">
+          Dikirim sebagai tamu. Kata belum tayang. Tim akan memeriksanya dulu.
+          Terima kasih menjaga bahasa Sambas tetap hidup.
+        </Text>
+
+        {success && (
+          <Paper withBorder radius="md" p="md">
+            <Group align="flex-start" wrap="nowrap" gap="sm">
+              <ThemeIcon
+                variant="light"
+                color="green"
+                size={36}
+                radius="md"
+                style={{ flexShrink: 0 }}
+              >
+                <Check size={20} strokeWidth={2.5} />
+              </ThemeIcon>
+              <Stack gap={4}>
+                <Text fw={600} lh={1.35}>
+                  &quot;{success}&quot; dikirim sebagai tamu
+                </Text>
+                <Text size="sm" c="dimmed" lh={1.55}>
+                  Kata belum tayang. Tim akan memeriksanya dulu, lalu menampilkannya di{' '}
+                  <Anchor component={Link} to="/words" size="sm">
+                    daftar kata
+                  </Anchor>
+                  . Kalau kata yang sama sudah ada, makna baru akan digabungkan ke
+                  halamannya.
+                </Text>
+              </Stack>
+            </Group>
+          </Paper>
+        )}
+
+        {error && (
+          <Alert color="red" variant="light" title="Gagal mengirim">
+            {error}
+          </Alert>
+        )}
+
+        <Card withBorder radius="md" padding="lg">
+          <form onSubmit={onSubmit}>
+            <Stack gap="md">
+              <TextInput
+                label="Kata Sambas"
+                placeholder="mis. kata"
+                required
+                value={lemma}
+                onChange={(e) => setLemma(e.currentTarget.value)}
+              />
+
+              {exact && (
+                <Alert
+                  icon={<Info size={18} />}
+                  color="blue"
+                  variant="light"
+                  title="Kata ini sudah ada di kamus"
+                >
+                  <Anchor
+                    component={Link}
+                    to={`/words/${encodeURIComponent(exact.lemma)}`}
+                    size="sm"
+                    fw={600}
+                  >
+                    Lihat halaman &quot;{exact.lemma}&quot;
+                  </Anchor>
+                  . Kamu tetap bisa mengajukan{' '}
+                  <b>makna baru</b> untuk kata ini - verifikator akan
+                  menggabungkannya, bukan menolak.
+                </Alert>
+              )}
+
+              {!exact && similar.length > 0 && (
+                <Alert icon={<Info size={18} />} color="gray" variant="light">
+                  Kata mirip yang sudah ada:{' '}
+                  {similar.map((w, i) => (
+                    <span key={w.id}>
+                      {i > 0 && ', '}
+                      <Anchor
+                        component={Link}
+                        to={`/words/${encodeURIComponent(w.lemma)}`}
+                        size="sm"
+                      >
+                        {w.lemma}
+                      </Anchor>
+                    </span>
+                  ))}
+                </Alert>
+              )}
+
+              <Divider label="Makna" labelPosition="center" />
+
+              {maknaList.map((m, i) => (
+                <MaknaCard
+                  key={i}
+                  index={i}
+                  value={m}
+                  wordClassOptions={wordClassOptions}
+                  wordClasses={wordClasses}
+                  onChange={(v) => setMaknaList((list) => list.map((x, j) => (j === i ? v : x)))}
+                  onRemove={() => setMaknaList((list) => list.filter((_, j) => j !== i))}
+                  canRemove={maknaList.length > 1}
+                />
+              ))}
+
+              <Button
+                variant="light"
+                color="gray"
+                leftSection={<Plus size={16} />}
+                onClick={() => setMaknaList((list) => [...list, { ...emptyMakna }])}
+              >
+                Tambah Makna Lain
+              </Button>
+
+              <Group justify="flex-end">
+                <Button type="submit" loading={submitting} leftSection={<Send size={16} />}>
+                  Kirim Kontribusi
+                </Button>
+              </Group>
+            </Stack>
+          </form>
+        </Card>
+      </Stack>
+    </Container>
+  );
+}

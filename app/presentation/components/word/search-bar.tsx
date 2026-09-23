@@ -43,7 +43,7 @@ export function SearchBar({
           onChange={(e) => setQ(e.target.value)}
           placeholder={
             direction === 'lemma'
-              ? 'Cari kosakata Sambas (mis. makatn, apam)...'
+              ? 'Cari kosakata Sambas...'
               : 'Cari dari bahasa Indonesia (mis. makan, kue)...'
           }
           size="md"

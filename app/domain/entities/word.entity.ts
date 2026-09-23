@@ -100,6 +100,10 @@ export interface WordDetail {
   is_verified: boolean;
   is_corrected: boolean;
   self_verified?: boolean;
+  created_by?: {
+    username: string;
+    role: string;
+  } | null;
   verified_by?: {
     username: string;
     role: string;
