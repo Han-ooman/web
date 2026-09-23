@@ -6,7 +6,7 @@ const requestHandler = createRequestHandler(
   import.meta.env.MODE,
 );
 
-// ponytail: _headers hanya berlaku untuk aset statis — respons SSR (HTML,
+// ponytail: _headers hanya berlaku untuk aset statis - respons SSR (HTML,
 // sitemap) lewat worker ini, jadi header keamanan diset di sini.
 // Nilai identik dengan public/_headers.
 const SECURITY_HEADERS: Readonly<Record<string, string>> = {

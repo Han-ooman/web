@@ -1,5 +1,6 @@
 import type { WordDetail } from '@/domain/entities/word.entity';
 import { env } from '@/infrastructure/config/env';
+import { FAQ_ITEMS } from '@/application/utils/faq-content';
 
 export interface SeoMetaProps {
   title: string;
@@ -29,6 +30,8 @@ export function buildMetaTags({
   // Logo resmi (mobile/logo_prod.png) jadi fallback og:image
   const finalImage = image ?? `${env.appUrl}/logo.png`;
   const noindex = noindexAlways || !env.isProd;
+  // Gambar kata → kartu besar; logo fallback tetap summary.
+  const twitterCard = image ? 'summary_large_image' : 'summary';
 
   return [
     { title: fullTitle },
@@ -42,10 +45,11 @@ export function buildMetaTags({
     { property: 'og:description', content: description },
     { property: 'og:url', content: url },
     { property: 'og:site_name', content: siteName },
+    { property: 'og:locale', content: 'id_ID' },
     { property: 'og:type', content: type },
     { property: 'og:image', content: finalImage },
     // Twitter Card
-    { name: 'twitter:card', content: 'summary' },
+    { name: 'twitter:card', content: twitterCard },
     { name: 'twitter:title', content: fullTitle },
     { name: 'twitter:description', content: description },
     { name: 'twitter:image', content: finalImage },
@@ -53,7 +57,7 @@ export function buildMetaTags({
 }
 
 const HOME_DESCRIPTION =
-  'Kamus Sambas digital terbuka: cari kosakata Melayu Sambas, makna, terjemahan Indonesia, contoh kalimat, dan lafal. Jelajahi daftar A–Z atau kontribusi kata baru.';
+  'Kamus Sambas digital terbuka: cari kosakata Melayu Sambas, makna, terjemahan Indonesia, contoh kalimat, dan lafal. Jelajahi daftar A-Z atau kontribusi kata baru.';
 
 const PLAY_STORE_URL =
   'https://play.google.com/store/apps/details?id=com.iamutaki.sambasku';
@@ -62,7 +66,7 @@ const GITHUB_URL = 'https://github.com/iamutaki/sambasku';
 /**
  * Entitas situs untuk homepage (prod only).
  * "Kamus Sambas" = nama yang dicari; SambasKu = merek.
- * Sitelinks Google tidak dijamin — schema + struktur hanya membuat eligible.
+ * Sitelinks Google tidak dijamin - schema + struktur hanya membuat eligible.
  */
 export function buildHomeJsonLd() {
   const websiteId = `${env.appUrl}/#website`;
@@ -133,7 +137,7 @@ export function buildWordSeoCopy(word: WordDetail): { title: string; description
     `makna dan penggunaan dalam bahasa Melayu Sambas`;
   const translation = firstIndonesianTranslation(word);
 
-  const title = `${lemma} bahasa Sambas — arti & terjemahan`;
+  const title = `${lemma} bahasa Sambas - arti & terjemahan`;
 
   const parts = [
     `Arti ${lemma} dalam bahasa Sambas: ${definition}`,
@@ -147,15 +151,35 @@ export function buildWordSeoCopy(word: WordDetail): { title: string; description
   };
 }
 
+/** FAQPage schema - hanya untuk konten FAQ asli di /faq (prod). */
+export function buildFaqJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    name: 'FAQ Kamus Sambas',
+    url: `${env.appUrl}/faq`,
+    inLanguage: 'id',
+    mainEntity: FAQ_ITEMS.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer,
+      },
+    })),
+  };
+}
+
 export function buildWordJsonLd(word: WordDetail) {
   const { description } = buildWordSeoCopy(word);
   const translation = firstIndonesianTranslation(word);
   const primaryImage = word.images.find((img) => img.is_primary)?.url ?? word.images[0]?.url;
   const wordUrl = `${env.appUrl}/words/${encodeURIComponent(word.lemma)}`;
+  const wordsIndexUrl = `${env.appUrl}/words`;
 
-  return {
-    '@context': 'https://schema.org',
+  const definedTerm = {
     '@type': 'DefinedTerm',
+    '@id': `${wordUrl}#term`,
     name: word.lemma,
     alternateName: translation
       ? [`${word.lemma} bahasa Sambas`, translation]
@@ -172,5 +196,35 @@ export function buildWordJsonLd(word: WordDetail) {
       inLanguage: 'id',
     },
     ...(primaryImage ? { image: primaryImage } : {}),
+  };
+
+  const breadcrumb = {
+    '@type': 'BreadcrumbList',
+    '@id': `${wordUrl}#breadcrumb`,
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Beranda',
+        item: env.appUrl,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Daftar Kata A-Z',
+        item: wordsIndexUrl,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: word.lemma,
+        item: wordUrl,
+      },
+    ],
+  };
+
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [definedTerm, breadcrumb],
   };
 }

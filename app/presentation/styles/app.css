@@ -27,7 +27,7 @@ body {
 
 /* A11y (Lighthouse color-contrast): dimmed bawaan Mantine lolos batas 4.5:1
    di dua tema. Light: gray-6 → gray-7. Dark: dark-2 (#828282) → dark-1.
-   Selector HARUS :root[...] — spesifisitas sama dengan definisi Mantine
+   Selector HARUS :root[...] - spesifisitas sama dengan definisi Mantine
    ([data-...] saja kalah dan diabaikan). */
 :root[data-mantine-color-scheme='light'] {
   --mantine-color-dimmed: var(--mantine-color-gray-7);

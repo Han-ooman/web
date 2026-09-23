@@ -20,6 +20,9 @@ export function Footer() {
           <Anchor component={Link} to="/words" size="xs" c="dimmed" py={4}>
             Daftar Kata A-Z
           </Anchor>
+          <Anchor component={Link} to="/faq" size="xs" c="dimmed" py={4}>
+            FAQ
+          </Anchor>
           <Anchor component={Link} to="/search" size="xs" c="dimmed" py={4}>
             Pencarian
           </Anchor>

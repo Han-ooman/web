@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLoaderData, useNavigation, Link } from 'react-router';
 import {
+  Anchor,
   Badge,
   Blockquote,
   Box,
@@ -134,6 +135,25 @@ export default function WordDetailPage() {
       )}
 
       <Stack gap="lg">
+        {/* Breadcrumb SSR - selaras BreadcrumbList JSON-LD */}
+        <Group gap={6} wrap="wrap">
+          <Anchor component={Link} to="/" size="xs" c="dimmed">
+            Beranda
+          </Anchor>
+          <Text size="xs" c="dimmed">
+            /
+          </Text>
+          <Anchor component={Link} to="/words" size="xs" c="dimmed">
+            Daftar Kata A-Z
+          </Anchor>
+          <Text size="xs" c="dimmed">
+            /
+          </Text>
+          <Text size="xs" fw={500}>
+            {word.lemma}
+          </Text>
+        </Group>
+
         {/* Navigation & Action Bar */}
         <Group justify="space-between" gap="md">
           <Button
@@ -174,7 +194,7 @@ export default function WordDetailPage() {
               </Badge>
               <WordTypeBadge type={word.word_type} />
             </Group>
-            {/* Teks SSR untuk query "{lemma} bahasa sambas" — jangan client-only. */}
+            {/* Teks SSR untuk query "{lemma} bahasa sambas" - jangan client-only. */}
             <Text size="sm" c="dimmed">
               Arti kata {word.lemma} dalam bahasa Sambas (Melayu Sambas).
             </Text>
