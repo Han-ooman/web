@@ -67,6 +67,10 @@ jobs:
         run: pnpm build
         env:
           VITE_API_BASE_URL: https://api.sambasku.com/api/v1
+          # Tier cadangan circuit breaker, urut (docs/backlogs/FAILOVER.md).
+          # Menambah host di sini WAJIB diikuti connect-src di public/_headers
+          # dan app/worker.ts, atau browser memblokir panggilan ke tier cadangan.
+          VITE_API_BASE_URL_FALLBACKS: https://deno.sambasku.com/api/v1,https://render.sambasku.com/api/v1
           VITE_APP_URL: https://sambasku.com
           VITE_APP_NAME: SambasKu
 
