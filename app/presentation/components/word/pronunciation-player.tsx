@@ -1,7 +1,7 @@
 import { Badge, Group, Text } from '@mantine/core';
 import type { WordAudio } from '@/domain/entities/word.entity';
 
-/** Pemutar satu take `word_audios` — URL file, bukan teks notasi IPA. */
+/** Pemutar satu take `word_audios` - URL file, bukan teks notasi IPA. */
 export function WordAudioPlayer({ audio }: { audio: WordAudio }) {
   const speaker = audio.speaker_name?.trim();
   return (

@@ -1,6 +1,10 @@
 import { listWordsAtoZ } from '../application/use-cases/word.use-case';
 import { env } from '../infrastructure/config/env';
 
+/** Max per request API = 100. Cap halaman agar Worker tidak timeout. */
+const PAGE_SIZE = 100;
+const MAX_PAGES = 50;
+
 export async function loader() {
   // Sitemap hanya untuk produksi - staging noindex total.
   if (!env.isProd) {
@@ -10,21 +14,32 @@ export async function loader() {
   const staticRoutes = [
     { path: '', priority: '1.0', changefreq: 'daily' },
     { path: '/words', priority: '0.9', changefreq: 'daily' },
+    { path: '/faq', priority: '0.8', changefreq: 'monthly' },
+    { path: '/privacy-policy', priority: '0.5', changefreq: 'yearly' },
   ];
 
-  let wordEntries: Array<{ path: string; priority: string; changefreq: string }> = [];
+  const wordPaths = new Set<string>();
 
   try {
-    const res = await listWordsAtoZ({ limit: 100 });
-    wordEntries = res.data.map((word) => ({
-      path: `/words/${encodeURIComponent(word.lemma)}`,
-      priority: '0.7',
-      changefreq: 'weekly',
-    }));
+    let cursor: string | undefined;
+    for (let page = 0; page < MAX_PAGES; page++) {
+      const res = await listWordsAtoZ({ limit: PAGE_SIZE, cursor });
+      for (const word of res.data) {
+        wordPaths.add(`/words/${encodeURIComponent(word.lemma)}`);
+      }
+      const next = res.meta?.next_cursor ?? null;
+      if (!res.meta?.has_more || !next) break;
+      cursor = next;
+    }
   } catch {
     // If API fails during sitemap generation, still serve static routes
-    wordEntries = [];
   }
+
+  const wordEntries = [...wordPaths].map((path) => ({
+    path,
+    priority: '0.7',
+    changefreq: 'weekly',
+  }));
 
   const allEntries = [...staticRoutes, ...wordEntries];
   const currentDate = new Date().toISOString().split('T')[0];

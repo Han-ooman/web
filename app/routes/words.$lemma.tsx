@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLoaderData, useNavigation, Link } from 'react-router';
 import {
+  Anchor,
   Badge,
   Blockquote,
   Box,
@@ -30,7 +31,7 @@ import {
 import type { Route } from './+types/words.$lemma';
 import { redirect } from 'react-router';
 import { getWordByLemma, getWordDetail } from '@/application/use-cases/word.use-case';
-import { buildMetaTags, buildWordJsonLd } from '@/application/utils/seo';
+import { buildMetaTags, buildWordJsonLd, buildWordSeoCopy } from '@/application/utils/seo';
 import { env } from '@/infrastructure/config/env';
 import { displayImageUrl } from '@/presentation/utils/display-image-url';
 import { WordTypeBadge } from '@/presentation/components/word/word-type-badge';
@@ -47,15 +48,13 @@ export function meta({ data }: Route.MetaArgs) {
   }
 
   const { word } = data;
-  const firstMeaning = word.meanings[0];
-  const definition =
-    firstMeaning?.definition ?? `Pelajari arti kata ${word.lemma} dalam bahasa Sambas.`;
+  const { title, description } = buildWordSeoCopy(word);
   const rawImage = word.images.find((img) => img.is_primary)?.url ?? word.images[0]?.url;
   const primaryImage = displayImageUrl(rawImage, { width: 1200 }) ?? rawImage;
 
   return buildMetaTags({
-    title: `${word.lemma} - Arti di Kamus Sambas`,
-    description: `${word.lemma}: ${definition}`,
+    title,
+    description,
     path: `/words/${encodeURIComponent(word.lemma)}`,
     image: primaryImage,
     type: 'article',
@@ -136,6 +135,25 @@ export default function WordDetailPage() {
       )}
 
       <Stack gap="lg">
+        {/* Breadcrumb SSR - selaras BreadcrumbList JSON-LD */}
+        <Group gap={6} wrap="wrap">
+          <Anchor component={Link} to="/" size="xs" c="dimmed">
+            Beranda
+          </Anchor>
+          <Text size="xs" c="dimmed">
+            /
+          </Text>
+          <Anchor component={Link} to="/words" size="xs" c="dimmed">
+            Daftar Kata A-Z
+          </Anchor>
+          <Text size="xs" c="dimmed">
+            /
+          </Text>
+          <Text size="xs" fw={500}>
+            {word.lemma}
+          </Text>
+        </Group>
+
         {/* Navigation & Action Bar */}
         <Group justify="space-between" gap="md">
           <Button
@@ -176,6 +194,10 @@ export default function WordDetailPage() {
               </Badge>
               <WordTypeBadge type={word.word_type} />
             </Group>
+            {/* Teks SSR untuk query "{lemma} bahasa sambas" - jangan client-only. */}
+            <Text size="sm" c="dimmed">
+              Arti kata {word.lemma} dalam bahasa Sambas (Melayu Sambas).
+            </Text>
             {!word.is_verified ? (
               <Text size="sm" c="dimmed">
                 Kata ini belum diperiksa tim Sambasku. Artinya atau terjemahannya bisa saja kurang tepat.

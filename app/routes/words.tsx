@@ -25,7 +25,7 @@ export function meta({ data }: Route.MetaArgs) {
   return buildMetaTags({
     title: query,
     description:
-      'Daftar kosakata Kamus Sambas dari A sampai Z. Setiap entri sudah diterbitkan dan diverifikasi.',
+      'Telusuri daftar kata Kamus Sambas dari A sampai Z. Setiap entri memuat makna, terjemahan Indonesia, dan telah diterbitkan serta diverifikasi.',
     path: `/words${data?.q ? `?q=${encodeURIComponent(data.q)}` : ''}`,
   });
 }

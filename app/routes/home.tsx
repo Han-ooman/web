@@ -24,7 +24,7 @@ export function meta(_args: Route.MetaArgs) {
     ...buildMetaTags({
       title: 'Kamus Sambas',
       description:
-        'Kamus Sambas untuk mencari kosakata, makna, terjemahan, dan peribahasa bahasa Melayu Sambas ke bahasa Indonesia. Terbuka dan kolaboratif.',
+        'Kamus Sambas digital terbuka: cari kosakata Melayu Sambas, makna, terjemahan Indonesia, contoh kalimat, dan lafal. Jelajahi daftar A-Z atau kontribusi kata baru.',
       path: '/',
     }),
     // Hanya produksi. Staging noindex, jadi entitas ini tidak boleh ikut terbit.
@@ -128,6 +128,13 @@ export default function Home() {
               Ajukan Kata Baru
             </Button>
           </Group>
+          <Text size="xs" c="dimmed">
+            Ingin tahu mengapa kamus ini ada? Baca{' '}
+            <Anchor component={Link} to="/faq">
+              FAQ
+            </Anchor>
+            .
+          </Text>
         </Card>
       </Stack>
     </Container>
