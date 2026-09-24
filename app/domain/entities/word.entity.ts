@@ -1,5 +1,8 @@
+import type { UsageLabel } from '@/domain/usage-labels';
+
 export type WordType = 'word' | 'idiom' | 'peribahasa' | 'ungkapan';
 export type WordStatus = 'draft' | 'pending' | 'published' | 'rejected';
+export type { UsageLabel };
 
 export interface WordSummary {
   id: string;
@@ -7,6 +10,7 @@ export interface WordSummary {
   language_id: string;
   language_code: string;
   word_type: WordType;
+  usage_labels?: UsageLabel[];
   status: WordStatus;
   is_verified: boolean;
   matched_translation?: string | null;
@@ -96,6 +100,7 @@ export interface WordDetail {
   language_id: string;
   notes: string | null;
   word_type: WordType;
+  usage_labels: UsageLabel[];
   status: WordStatus;
   is_verified: boolean;
   is_corrected: boolean;

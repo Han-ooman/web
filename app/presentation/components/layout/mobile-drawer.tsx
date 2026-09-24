@@ -1,10 +1,11 @@
 import { Anchor, Drawer, Group, Stack } from '@mantine/core';
-import { Search, List, CircleHelp } from 'lucide-react';
+import { Search, List, CircleHelp, Languages } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
 
 const NAV_ITEMS = [
   { to: '/words', label: 'Daftar Kata A-Z', icon: List },
   { to: '/search', label: 'Cari', icon: Search },
+  { to: '/bantuan-terjemahan', label: 'Bantuan', icon: Languages },
   { to: '/faq', label: 'FAQ', icon: CircleHelp },
 ];
 

@@ -15,8 +15,10 @@ const SECURITY_HEADERS: Readonly<Record<string, string>> = {
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+  // connect-src memuat SEMUA tier API: browser harus boleh menghubungi tier
+  // cadangan saat circuit breaker pindah (app/infrastructure/api/failover.ts).
   'Content-Security-Policy':
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https: blob:; media-src 'self' https: blob:; connect-src 'self' https://api.sambasku.com https://sambasku-staging.iamutaki.com; frame-ancestors 'none'",
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https: blob:; media-src 'self' https: blob:; connect-src 'self' https://api.sambasku.com https://deno.sambasku.com https://render.sambasku.com https://sambasku-staging.iamutaki.com; frame-ancestors 'none'",
 };
 
 // ==== Edge cache HTML SSR (stale-while-revalidate) ====
@@ -27,13 +29,26 @@ const SECURITY_HEADERS: Readonly<Record<string, string>> = {
 const FRESH_S = 60;
 const STALE_MAX_S = 86400;
 
+/// Sitemap jauh lebih mahal daripada satu halaman HTML (satu subrequest API per
+/// halaman kata), dan isinya berubah lambat. Jendela segarnya sehari, bukan 60
+/// detik, supaya crawler tidak memicu pembangunan ulang terus-menerus.
+const SITEMAP_PATH = '/sitemap.xml';
+const SITEMAP_FRESH_S = 86400;
+
+function freshSeconds(pathname: string): number {
+  return pathname === SITEMAP_PATH ? SITEMAP_FRESH_S : FRESH_S;
+}
+
 // @cloudflare/workers-types versi ini tidak mengetikkan caches.default
 const edgeCache: Cache = (caches as unknown as { default: Cache }).default;
 
 function isCacheable(method: string, pathname: string): boolean {
   // '/words' (daftar, ada filter query) sengaja tidak di-cache; hanya
-  // halaman detail '/words/<lemma>' dan beranda.
-  return method === 'GET' && (pathname === '/' || pathname.startsWith('/words/'));
+  // halaman detail '/words/<lemma>', beranda, dan sitemap.
+  return (
+    method === 'GET' &&
+    (pathname === '/' || pathname.startsWith('/words/') || pathname === SITEMAP_PATH)
+  );
 }
 
 async function render(request: Request): Promise<Response> {
@@ -80,14 +95,15 @@ export default {
       return render(request);
     }
 
+    const freshS = freshSeconds(pathname);
     const cached = await edgeCache.match(request);
     if (cached) {
       const ageS = (Date.now() - Number(cached.headers.get('x-cached-at') ?? 0)) / 1000;
-      if (ageS > FRESH_S && ageS < STALE_MAX_S) {
+      if (ageS > freshS && ageS < STALE_MAX_S) {
         ctx.waitUntil(renderAndCache(request, ctx));
       }
       const headers = new Headers(cached.headers);
-      headers.set('x-cache', ageS <= FRESH_S ? 'hit' : 'swr');
+      headers.set('x-cache', ageS <= freshS ? 'hit' : 'swr');
       return new Response(cached.body, { status: cached.status, headers });
     }
 

@@ -1,7 +1,7 @@
 import { Suspense, lazy, useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import { Anchor, Box, Burger, Container, Group, Image } from '@mantine/core';
-import { Search, List, CircleHelp } from 'lucide-react';
+import { Search, List, CircleHelp, Languages } from 'lucide-react';
 import { ThemeToggle } from '../theme-toggle';
 import { Logo } from './logo';
 
@@ -13,6 +13,7 @@ const MobileDrawer = lazy(() => import('./mobile-drawer'));
 const NAV_ITEMS = [
   { to: '/words', label: 'Daftar Kata A-Z', icon: List },
   { to: '/search', label: 'Cari', icon: Search },
+  { to: '/bantuan-terjemahan', label: 'Bantuan', icon: Languages },
   { to: '/faq', label: 'FAQ', icon: CircleHelp },
 ];
 

@@ -1,0 +1,23 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.iamutaki.sambasku",
+      "sha256_cert_fingerprints": [
+        "89:1B:F4:61:03:08:0D:51:F4:93:C2:A2:2E:8E:75:9F:E4:3E:40:D6:B8:8B:8F:9C:53:91:FC:65:C3:75:7B:6B",
+        "8F:6B:13:77:24:9E:22:29:48:3C:FD:83:7A:D3:C5:19:B2:DD:0D:3B:90:97:3D:27:DD:16:3E:AF:18:7C:AA:91"
+      ]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.iamutaki.sambasku.staging",
+      "sha256_cert_fingerprints": [
+        "89:1B:F4:61:03:08:0D:51:F4:93:C2:A2:2E:8E:75:9F:E4:3E:40:D6:B8:8B:8F:9C:53:91:FC:65:C3:75:7B:6B"
+      ]
+    }
+  }
+]

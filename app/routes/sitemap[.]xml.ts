@@ -1,9 +1,21 @@
 import { listWordsAtoZ } from '../application/use-cases/word.use-case';
 import { env } from '../infrastructure/config/env';
 
-/** Max per request API = 100. Cap halaman agar Worker tidak timeout. */
+/**
+ * Anggaran SUBREQUEST, bukan cuma timeout.
+ *
+ * Tiap halaman = satu subrequest Worker, dan paket gratis hanya mengizinkan 50
+ * per request. MAX_PAGES 50 berarti route ini sendiri menghabiskan seluruh
+ * anggaran dan dijamin gagal begitu korpus melewati 5.000 kata. 10 halaman
+ * (1.000 kata) menyisakan ruang besar, dan hasilnya di-cache di edge oleh
+ * `app/worker.ts` sehingga jarang dibangun ulang.
+ *
+ * `limit` API dibatasi 100 (max-nya), jadi PAGE_SIZE tidak bisa dinaikkan lagi.
+ * Kalau korpus melewati 1.000 kata, pecah jadi sitemap index - jangan naikkan
+ * MAX_PAGES kembali ke angka yang menyentuh batas.
+ */
 const PAGE_SIZE = 100;
-const MAX_PAGES = 50;
+const MAX_PAGES = 10;
 
 export async function loader() {
   // Sitemap hanya untuk produksi - staging noindex total.
@@ -14,6 +26,7 @@ export async function loader() {
   const staticRoutes = [
     { path: '', priority: '1.0', changefreq: 'daily' },
     { path: '/words', priority: '0.9', changefreq: 'daily' },
+    { path: '/bantuan-terjemahan', priority: '0.7', changefreq: 'daily' },
     { path: '/faq', priority: '0.8', changefreq: 'monthly' },
     { path: '/privacy-policy', priority: '0.5', changefreq: 'yearly' },
     { path: '/hapus-akun', priority: '0.4', changefreq: 'yearly' },

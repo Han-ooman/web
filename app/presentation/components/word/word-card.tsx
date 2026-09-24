@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { Badge, Card, Group, Text } from '@mantine/core';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { WordTypeBadge } from './word-type-badge';
+import { UsageLabelsBadges } from './usage-labels-badges';
 import type { WordSummary } from '@/domain/entities/word.entity';
 
 export function WordCard({ word }: { word: WordSummary }) {
@@ -34,6 +35,7 @@ export function WordCard({ word }: { word: WordSummary }) {
             </Badge>
           )}
           <WordTypeBadge type={word.word_type} />
+          <UsageLabelsBadges labels={word.usage_labels} size="xs" />
         </Group>
 
         <Group gap="xs" wrap="nowrap" align="center">

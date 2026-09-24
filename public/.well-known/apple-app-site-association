@@ -1,0 +1,18 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "RM7CJ5K9SU.com.iamutaki.sambasku",
+        "paths": [
+          "/words/*",
+          "/reset-password",
+          "/reset-password/*",
+          "/hapus-akun",
+          "/hapus-akun/*",
+          "/users/*"
+        ]
+      }
+    ]
+  }
+}

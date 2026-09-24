@@ -35,6 +35,7 @@ import { buildMetaTags, buildWordJsonLd, buildWordSeoCopy } from '@/application/
 import { env } from '@/infrastructure/config/env';
 import { displayImageUrl } from '@/presentation/utils/display-image-url';
 import { WordTypeBadge } from '@/presentation/components/word/word-type-badge';
+import { UsageLabelsBadges } from '@/presentation/components/word/usage-labels-badges';
 import { WordAudioPlayer } from '@/presentation/components/word/pronunciation-player';
 import { formatWordClass } from '@/application/utils/formatters';
 
@@ -193,6 +194,7 @@ export default function WordDetailPage() {
                 {word.is_verified ? 'Terverifikasi' : 'Menunggu pengecekan'}
               </Badge>
               <WordTypeBadge type={word.word_type} />
+              <UsageLabelsBadges labels={word.usage_labels} />
             </Group>
             {/* Teks SSR untuk query "{lemma} bahasa sambas" - jangan client-only. */}
             <Text size="sm" c="dimmed">
