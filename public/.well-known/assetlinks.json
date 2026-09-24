@@ -1,17 +1,24 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "com.iamutaki.sambasku",
       "sha256_cert_fingerprints": [
         "89:1B:F4:61:03:08:0D:51:F4:93:C2:A2:2E:8E:75:9F:E4:3E:40:D6:B8:8B:8F:9C:53:91:FC:65:C3:75:7B:6B",
-        "8F:6B:13:77:24:9E:22:29:48:3C:FD:83:7A:D3:C5:19:B2:DD:0D:3B:90:97:3D:27:DD:16:3E:AF:18:7C:AA:91"
+        "8F:6B:13:77:24:9E:22:29:48:3C:FD:83:7A:D3:C5:19:B2:DD:0D:3B:90:97:3D:27:DD:16:3E:AF:18:7C:AA:91",
+        "24:BB:5F:D3:EA:42:B8:12:A4:77:12:89:5F:CE:A4:A7:23:1C:B9:74:2F:6A:7D:71:2C:BD:3F:9F:7E:AE:91:A8",
+        "6E:20:38:DB:D1:7B:E5:B7:33:E7:61:7E:DA:4D:FE:5A:10:31:96:87:CA:C3:83:1B:4D:69:A1:72:CF:FD:58:48"
       ]
     }
   },
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "com.iamutaki.sambasku.staging",

@@ -1,4 +1,5 @@
 import type { WordDetail } from '@/domain/entities/word.entity';
+import { pickSafePrimaryImageUrl } from '@/domain/image-content-warnings';
 import { env } from '@/infrastructure/config/env';
 import { getFixedT } from '@/application/i18n/i18n-instance';
 import {
@@ -244,8 +245,7 @@ export function buildWordJsonLd(word: WordDetail, localeInput?: string) {
   const t = getFixedT(locale);
   const { description } = buildWordSeoCopy(word, locale);
   const translation = firstIndonesianTranslation(word);
-  const primaryImage =
-    word.images.find((img) => img.is_primary)?.url ?? word.images[0]?.url;
+  const primaryImage = pickSafePrimaryImageUrl(word.images);
   const wordUrl = `${env.appUrl}${localePath(locale, `/words/${encodeURIComponent(word.lemma)}`)}`;
   const wordsIndexUrl = `${env.appUrl}${localePath(locale, '/words')}`;
   const homeUrl = `${env.appUrl}${localePath(locale, '/')}`;
