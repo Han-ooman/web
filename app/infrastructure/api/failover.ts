@@ -1,4 +1,5 @@
 import { env } from '../config/env';
+import { ColdHostGate, type AbortLike } from './cold-host-gate';
 
 /**
  * Circuit breaker tiga tier untuk web.
@@ -16,6 +17,12 @@ const PIN_MS = 5 * 60 * 1000;
 
 /** Timeout normal - sama dengan nilai apiClient sebelum failover ada. */
 const DEFAULT_TIMEOUT_MS = 10_000;
+
+/**
+ * Probe `/health` hanya untuk memulai boot. Tidak perlu menunggu instance siap
+ * (itu tugas request data), dan koneksi yang menggantung harus bisa dibatalkan.
+ */
+const HEALTH_PROBE_MS = 8_000;
 
 /**
  * Timeout tier terakhir. Render paket gratis tidur setelah ~15 menit dan bangun
@@ -47,13 +54,31 @@ function buildTiers(): readonly ApiTier[] {
 }
 
 const tiers = buildTiers();
+const coldGate = new ColdHostGate();
 
 let pinnedIndex = 0;
 let pinnedUntil = 0;
 let warmedUpForPin = 0;
+let probeAbort: AbortController | null = null;
+let probeTimer: ReturnType<typeof setTimeout> | null = null;
 
 /** false = tidak ada tujuan pindah; apiClient jalan seperti sebelumnya. */
-export const hasFallbacks = tiers.length > 1;
+export function hasFallbacks(): boolean {
+  return tiers.length > 1;
+}
+
+/** Tier terakhir menanggung cold start (timeout lebih panjang dari tier biasa). */
+export function isColdTier(tier: ApiTier): boolean {
+  return tier.timeoutMs > DEFAULT_TIMEOUT_MS;
+}
+
+export function acquireColdSlot(signal?: AbortLike): Promise<void> {
+  return coldGate.acquire(signal);
+}
+
+export function releaseColdSlot(): void {
+  coldGate.release();
+}
 
 /** Murni - tidak memutasi apa pun. Pin kedaluwarsa cukup berhenti dihitung. */
 function effectiveIndex(): number {
@@ -63,15 +88,6 @@ function effectiveIndex(): number {
 
 export function activeTier(): ApiTier {
   return tiers[effectiveIndex()];
-}
-
-/**
- * Daftar tier yang boleh dicoba untuk SATU request, mulai dari tier aktif.
- * Tier di atasnya tidak dicoba ulang: kalau tier 1 baru saja gagal, mencobanya
- * lagi dalam request yang sama hanya menambah latensi.
- */
-export function tiersToTry(): readonly ApiTier[] {
-  return tiers.slice(effectiveIndex());
 }
 
 /** Naik satu tier dan pin. Tier terakhir terminal - tidak ada host keempat. */
@@ -90,14 +106,43 @@ export function advanceTier(): ApiTier | null {
  * Kenapa bukan cron 24/7: menjaga Render melek terus memakan ~730 dari 750 jam
  * gratis per bulan, jadi kuota bisa habis tepat saat cadangan diperlukan.
  */
+function cancelProbe(): void {
+  if (probeTimer !== null) clearTimeout(probeTimer);
+  probeTimer = null;
+  probeAbort?.abort();
+  probeAbort = null;
+}
+
 function warmUpTierAfter(pinnedAt: number): void {
   const warm = tiers[pinnedAt + 1];
   if (!warm) return;
   if (warmedUpForPin === pinnedUntil) return;
+
+  let origin: string;
+  try {
+    const base = typeof window === 'undefined' ? 'https://placeholder.invalid' : window.location.origin;
+    origin = new URL(warm.baseUrl, base).origin;
+  } catch {
+    return;
+  }
   warmedUpForPin = pinnedUntil;
-  const origin = new URL(warm.baseUrl, 'https://placeholder.invalid').origin;
-  // Sengaja tanpa await dan tanpa penanganan error: hanya usaha memulai boot.
-  void fetch(`${origin}/health`, { method: 'GET' }).catch(() => {});
+
+  cancelProbe();
+  const controller = new AbortController();
+  probeAbort = controller;
+  probeTimer = setTimeout(() => controller.abort(), HEALTH_PROBE_MS);
+  // Di browser `/health` tidak ikut CORS `/api/*`. `no-cors` tetap mengirim GET
+  // supaya Render bangun; body-nya tidak perlu dibaca.
+  const init: RequestInit = { method: 'GET', signal: controller.signal };
+  if (typeof window !== 'undefined') init.mode = 'no-cors';
+  void fetch(`${origin}/health`, init)
+    .catch(() => {})
+    .finally(() => {
+      if (probeAbort !== controller) return;
+      if (probeTimer !== null) clearTimeout(probeTimer);
+      probeTimer = null;
+      probeAbort = null;
+    });
 }
 
 /** Hanya metode idempoten boleh diulang otomatis ke tier lain. */
@@ -129,6 +174,8 @@ export function __resetFailoverForTests(): void {
   pinnedIndex = 0;
   pinnedUntil = 0;
   warmedUpForPin = 0;
+  cancelProbe();
+  coldGate.reset();
 }
 
 export { isServer, tiers as apiTiers };

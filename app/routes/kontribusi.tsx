@@ -7,6 +7,7 @@ import {
   Box,
   Button,
   Card,
+  Checkbox,
   Container,
   Divider,
   Group,
@@ -32,6 +33,13 @@ import {
 } from '../application/use-cases/word.use-case';
 import { AppError, apiClient } from '../infrastructure/api/api-client';
 import type { WordSummary } from '../domain/entities/word.entity';
+import {
+  hasConflictingUsageLabels,
+  REGISTER_LABELS,
+  USAGE_LABEL_LABELS,
+  WARNING_LABELS,
+  type UsageLabel,
+} from '../domain/usage-labels';
 import {
   listDialects,
   listLanguages,
@@ -405,12 +413,23 @@ export default function KontribusiPage() {
   const defaultDialectId = pickDefaultDialectId(dialects);
 
   const [lemma, setLemma] = useState(searchParams.get('q')?.trim() ?? '');
+  const [usageLabels, setUsageLabels] = useState<UsageLabel[]>([]);
   const [maknaList, setMaknaList] = useState<MaknaForm[]>([
     { ...emptyMakna, wordClassId: umumWordClassId },
   ]);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const usageLabelsConflict = hasConflictingUsageLabels(usageLabels);
+
+  const setUsageLabelGroup = (group: readonly UsageLabel[], groupSelected: string[]) => {
+    const nextGroup = groupSelected.filter((code): code is UsageLabel =>
+      (group as readonly string[]).includes(code),
+    );
+    const outside = usageLabels.filter((code) => !(group as readonly string[]).includes(code));
+    setUsageLabels([...outside, ...nextGroup]);
+  };
 
   // ==== Cek duplikat live (debounce 400ms) ====
   // Lemma yang sudah tayang → tawarkan lihat halamannya / ajukan makna
@@ -445,6 +464,10 @@ export default function KontribusiPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (hasConflictingUsageLabels(usageLabels)) {
+      setError('Halus dan Kasar tidak bisa dipilih bersamaan.');
+      return;
+    }
     setSubmitting(true);
     try {
       const word = lemma.trim();
@@ -455,6 +478,7 @@ export default function KontribusiPage() {
           language_id: sambas?.id,
           ...(defaultDialectId ? { dialect_id: defaultDialectId } : {}),
           word_type: 'word',
+          usage_labels: usageLabels,
           meanings: maknaList.map((m, i) => ({
             word_class_id: m.wordClassId,
             definition: m.definition.trim(),
@@ -487,6 +511,7 @@ export default function KontribusiPage() {
       });
       setSuccess(word);
       setLemma('');
+      setUsageLabels([]);
       setMaknaList([{ ...emptyMakna, wordClassId: umumWordClassId }]);
     } catch (err) {
       if (err instanceof AppError && err.details?.length) {
@@ -595,6 +620,46 @@ export default function KontribusiPage() {
                 </Alert>
               )}
 
+              <Stack gap="xs">
+                <Text size="sm" fw={500}>
+                  Register & peringatan
+                </Text>
+                <Text size="xs" c="dimmed">
+                  Opsional. Bantu pembaca paham gaya bahasa dan sensitivitas isi.
+                </Text>
+                <Checkbox.Group
+                  label="Register"
+                  value={usageLabels.filter((code) =>
+                    (REGISTER_LABELS as readonly string[]).includes(code),
+                  )}
+                  onChange={(vals) => setUsageLabelGroup(REGISTER_LABELS, vals)}
+                >
+                  <Group mt={6} gap="sm" wrap="wrap">
+                    {REGISTER_LABELS.map((code) => (
+                      <Checkbox key={code} value={code} label={USAGE_LABEL_LABELS[code]} />
+                    ))}
+                  </Group>
+                </Checkbox.Group>
+                <Checkbox.Group
+                  label="Peringatan"
+                  value={usageLabels.filter((code) =>
+                    (WARNING_LABELS as readonly string[]).includes(code),
+                  )}
+                  onChange={(vals) => setUsageLabelGroup(WARNING_LABELS, vals)}
+                >
+                  <Group mt={6} gap="sm" wrap="wrap">
+                    {WARNING_LABELS.map((code) => (
+                      <Checkbox key={code} value={code} label={USAGE_LABEL_LABELS[code]} />
+                    ))}
+                  </Group>
+                </Checkbox.Group>
+                {usageLabelsConflict && (
+                  <Text size="xs" c="red">
+                    Halus dan Kasar tidak bisa dipilih bersamaan.
+                  </Text>
+                )}
+              </Stack>
+
               <Divider label="Makna" labelPosition="center" />
 
               {maknaList.map((m, i) => (
@@ -622,7 +687,12 @@ export default function KontribusiPage() {
               </Button>
 
               <Group justify="flex-end">
-                <Button type="submit" loading={submitting} leftSection={<Send size={16} />}>
+                <Button
+                  type="submit"
+                  loading={submitting}
+                  disabled={usageLabelsConflict}
+                  leftSection={<Send size={16} />}
+                >
                   Kirim Kontribusi
                 </Button>
               </Group>

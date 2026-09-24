@@ -9,6 +9,7 @@ export default [
   route('hapus-akun', 'routes/hapus-akun.tsx'),
   route('words', 'routes/words.tsx'),
   route('words/:lemma', 'routes/words.$lemma.tsx'),
+  route('users/:username', 'routes/users.$username.tsx'),
   route('reset-password', 'routes/reset-password.tsx'),
   route('sitemap.xml', 'routes/sitemap[.]xml.ts'),
   route('robots.txt', 'routes/robots[.]txt.ts'),

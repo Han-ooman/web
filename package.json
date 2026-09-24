@@ -13,6 +13,7 @@
     "build:staging": "react-router build --mode staging",
     "preview": "react-router dev",
     "typecheck": "react-router typegen && tsc -b",
+    "test": "node --experimental-strip-types --test app/infrastructure/api/__tests__/*.test.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"app/**/*.{ts,tsx}\""

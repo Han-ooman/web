@@ -14,3 +14,12 @@
 
 /fonts/*
   Cache-Control: public, max-age=31536000, immutable
+
+# App Links / Universal Links verification (no redirect, correct MIME).
+/.well-known/apple-app-site-association
+  Content-Type: application/json
+  Cache-Control: public, max-age=3600
+
+/.well-known/assetlinks.json
+  Content-Type: application/json
+  Cache-Control: public, max-age=3600
