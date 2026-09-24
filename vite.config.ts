@@ -21,6 +21,8 @@ export default defineConfig({
       '@mantine/core',
       '@mantine/hooks',
       'lucide-react',
+      'i18next',
+      'react-i18next',
     ],
   },
   resolve: {

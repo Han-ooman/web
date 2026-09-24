@@ -6,9 +6,9 @@ import {
   Scripts,
   ScrollRestoration,
   Link,
+  useParams,
 } from 'react-router';
 import {
-  AppShell,
   Button,
   ColorSchemeScript,
   MantineProvider,
@@ -21,9 +21,12 @@ import {
 } from '@mantine/core';
 import { Home, AlertCircle, RefreshCw } from 'lucide-react';
 import type { Route } from './+types/root';
-import { Header } from './presentation/components/layout/header';
-import { Footer } from './presentation/components/layout/footer';
-import { RouteProgressBar } from './presentation/components/route-progress-bar';
+import {
+  DEFAULT_LOCALE,
+  isAppLocale,
+  localePath,
+} from '@/application/i18n/locales';
+import { getFixedT } from '@/application/i18n/i18n-instance';
 import './presentation/styles/app.css';
 
 const theme = createTheme({
@@ -32,14 +35,8 @@ const theme = createTheme({
 });
 
 export const links: Route.LinksFunction = () => [
-  // Satu favicon, 192px (48×4). Google Search menolak ikon yang bukan
-  // kelipatan 48px. logo.png 512px plus wordmark tidak pernah tampil
-  // di hasil pencarian. /favicon.ico (48px, emblem yang sama) tetap
-  // ada untuk browser yang meminta path itu.
   { rel: 'icon', href: '/favicon-192.png', type: 'image/png', sizes: '192x192' },
   { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
-  // Font self-host (lihat app.css) - preload woff2 utama biar LCP tidak
-  // menunggu CSS parse dulu sebelum font ditemukan.
   {
     rel: 'preload',
     href: '/fonts/pjs-latin-var.woff2',
@@ -50,8 +47,11 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const params = useParams();
+  const lang = isAppLocale(params.locale) ? params.locale : DEFAULT_LOCALE;
+
   return (
-    <html lang="id" {...mantineHtmlProps} suppressHydrationWarning>
+    <html lang={lang} {...mantineHtmlProps} suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -61,16 +61,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <MantineProvider theme={theme} defaultColorScheme="auto">
-          {/* Footer di luar AppShell: AppShell.Footer Mantine v9 fixed
-              by default (menutupi konten) dan tanpa opsi non-fixed. */}
-          <AppShell header={{ height: 60 }} padding={0}>
-            <AppShell.Header>
-              <Header />
-            </AppShell.Header>
-            <RouteProgressBar />
-            <AppShell.Main>{children}</AppShell.Main>
-          </AppShell>
-          <Footer />
+          {children}
         </MantineProvider>
         <ScrollRestoration />
         <Scripts />
@@ -84,18 +75,21 @@ export default function App() {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  let message = 'Terjadi kesalahan pada sistem.';
-  let details = 'Mohon coba beberapa saat lagi.';
+  const params = useParams();
+  const locale = isAppLocale(params.locale) ? params.locale : DEFAULT_LOCALE;
+  const t = getFixedT(locale);
+
+  let message = t('errors_generic');
+  let details = t('errors_genericDetail');
   let is404 = false;
 
   if (isRouteErrorResponse(error)) {
     if (error.status === 404) {
       is404 = true;
-      message = 'Halaman Tidak Ditemukan (404)';
-      details =
-        'Kosakata atau tautan yang kamu tuju belum tersedia atau telah dipindahkan.';
+      message = t('errors_notFoundTitle');
+      details = t('errors_notFoundDetail');
     } else {
-      message = `Error ${error.status}`;
+      message = t('errors_errorStatus', { status: error.status });
       details = error.statusText || details;
     }
   } else if (error instanceof Error) {
@@ -125,11 +119,11 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
       <Stack align="center" gap="sm" mt="md">
         <Button
           component={Link}
-          to="/"
+          to={localePath(locale, '/')}
           leftSection={<Home size={16} />}
           variant="light"
         >
-          Kembali ke Beranda
+          {t('common_backHome')}
         </Button>
         {!is404 && (
           <Button
@@ -137,7 +131,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
             onClick={() => window.location.reload()}
             leftSection={<RefreshCw size={16} />}
           >
-            Muat Ulang
+            {t('common_reload')}
           </Button>
         )}
       </Stack>

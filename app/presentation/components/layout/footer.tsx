@@ -1,10 +1,14 @@
 import { Link } from 'react-router';
 import { Anchor, Container, Divider, Group, Stack, Text } from '@mantine/core';
 import { Heart, ExternalLink } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Logo } from './logo';
+import { useLocalePath } from '@/application/i18n/use-locale';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+  const { t } = useTranslation();
+    const lp = useLocalePath();
 
   return (
     <Container size="md" py="md">
@@ -12,31 +16,31 @@ export function Footer() {
         <Group gap="xs" justify="center">
           <Logo h={28} />
           <Text size="sm" c="dimmed">
-            Kamus Sambas, kamus digital bahasa Sambas &amp; Indonesia
+            {t('common_tagline')}
           </Text>
         </Group>
 
         <Group gap="lg" justify="center">
-          <Anchor component={Link} to="/words" size="xs" c="dimmed" py={4}>
-            Daftar Kata A-Z
+          <Anchor component={Link} to={lp('/words')} size="xs" c="dimmed" py={4}>
+            {t('nav_words')}
           </Anchor>
-          <Anchor component={Link} to="/faq" size="xs" c="dimmed" py={4}>
-            FAQ
+          <Anchor component={Link} to={lp('/faq')} size="xs" c="dimmed" py={4}>
+            {t('nav_faq')}
           </Anchor>
           <Anchor
             component={Link}
-            to="/privacy-policy"
+            to={lp('/privacy-policy')}
             size="xs"
             c="dimmed"
             py={4}
           >
-            Privasi
+            {t('nav_privacy')}
           </Anchor>
-          <Anchor component={Link} to="/search" size="xs" c="dimmed" py={4}>
-            Pencarian
+          <Anchor component={Link} to={lp('/search')} size="xs" c="dimmed" py={4}>
+            {t('nav_searchFull')}
           </Anchor>
           <Anchor
-            href="https://github.com/iamutaki/sambasku"
+            href="https://github.com/sambasku"
             target="_blank"
             rel="noreferrer"
             size="xs"
@@ -44,7 +48,7 @@ export function Footer() {
           >
             <Group gap={4} wrap="nowrap">
               <ExternalLink size={13} />
-              GitHub
+              {t('nav_github')}
             </Group>
           </Anchor>
         </Group>
@@ -54,19 +58,23 @@ export function Footer() {
 
       <Stack gap={4} align="center">
         <Text size="xs" c="dimmed" ta="center">
-          © {currentYear} SambasKu. Didukung oleh penutur asli dan pegiat bahasa.
+          {t('common_copyright', { year: currentYear })}
           {' · '}
-          <Anchor component={Link} to="/hapus-akun" size="xs" c="dimmed">
-            Hapus akun
+          <Anchor component={Link} to={lp('/hapus-akun')} size="xs" c="dimmed">
+            {t('common_deleteAccount')}
           </Anchor>
         </Text>
         <Group gap={4} wrap="nowrap">
           <Text size="xs" c="dimmed">
-            Dibuat dengan
+            {t('common_madeWith')}
           </Text>
-          <Heart size={12} color="var(--mantine-color-red-5)" fill="var(--mantine-color-red-5)" />
+          <Heart
+            size={12}
+            color="var(--mantine-color-red-5)"
+            fill="var(--mantine-color-red-5)"
+          />
           <Text size="xs" c="dimmed">
-            untuk pelestarian bahasa daerah.
+            {t('common_forLanguagePreservation')}
           </Text>
         </Group>
       </Stack>

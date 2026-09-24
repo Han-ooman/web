@@ -1,4 +1,4 @@
-/** Register + peringatan konten (closed enum, sinkron API usage_labels). */
+/** Gaya bahasa + peringatan konten (closed enum, sinkron API usage_labels). */
 export const USAGE_LABELS = [
   'kasar',
   'tabu',
@@ -10,7 +10,7 @@ export const USAGE_LABELS = [
 
 export type UsageLabel = (typeof USAGE_LABELS)[number];
 
-/** Register: gaya/pantangan berbahasa. */
+/** Gaya bahasa: pantangan / tingkat tutur. */
 export const REGISTER_LABELS = [
   'kasar',
   'tabu',
@@ -33,7 +33,7 @@ export const USAGE_LABEL_LABELS: Record<UsageLabel, string> = {
   diskriminatif: 'Diskriminatif',
 };
 
-/** Label yang ditampilkan lebih menonjol (peringatan isi / register keras). */
+/** Label yang ditampilkan lebih menonjol (peringatan isi / gaya keras). */
 export const PROMINENT_USAGE_LABELS = new Set<UsageLabel>([
   'kasar',
   'tabu',

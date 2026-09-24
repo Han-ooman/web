@@ -18,17 +18,28 @@ import {
   requestAccountDeletion,
 } from '@/application/use-cases/auth.use-case';
 import { buildMetaTags } from '@/application/utils/seo';
+import {
+  DEFAULT_LOCALE,
+  isAppLocale,
+  localePath,
+} from '@/application/i18n/locales';
+import { useLocalePath } from '@/application/i18n/use-locale';
 
-export function meta(_args: Route.MetaArgs) {
+
+export function meta({ params }: Route.MetaArgs) {
+  const locale = isAppLocale(params.locale) ? params.locale : DEFAULT_LOCALE;
   return buildMetaTags({
     title: 'Hapus akun SambasKu',
     description:
       'Cara menghapus akun SambasKu dan data pribadi lewat aplikasi Android atau situs, termasuk data yang dihapus dan yang tetap tersimpan.',
-    path: '/hapus-akun',
+    path: localePath(locale, '/hapus-akun'),
+    locale,
   });
 }
 
 export default function HapusAkunPage() {
+  const lp = useLocalePath();
+
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [confirmation, setConfirmation] = useState('');
@@ -213,11 +224,11 @@ export default function HapusAkunPage() {
         </Stack>
 
         <Text size="sm" c="dimmed">
-          <Anchor component={Link} to="/privacy-policy">
+          <Anchor component={Link} to={lp('/privacy-policy')}>
             Kebijakan Privasi
           </Anchor>
           {' · '}
-          <Anchor component={Link} to="/">
+          <Anchor component={Link} to={lp('/')}>
             Beranda
           </Anchor>
         </Text>

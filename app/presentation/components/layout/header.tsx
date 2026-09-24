@@ -2,48 +2,61 @@ import { Suspense, lazy, useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import { Anchor, Box, Burger, Container, Group, Image } from '@mantine/core';
 import { Search, List, CircleHelp, Languages } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { ThemeToggle } from '../theme-toggle';
 import { Logo } from './logo';
+import { LanguageSwitcher } from './language-switcher';
+import { useLocalePath } from '@/application/i18n/use-locale';
+import { stripLocalePrefix } from '@/application/i18n/locales';
 
-// ponytail: Drawer di-split biar kode Mantine Drawer keluar dari chunk
-// pertama; NAV_ITEMS sengaja duplikat di mobile-drawer.tsx (import bersama
-// akan menarik chunk-nya masuk lagi).
 const MobileDrawer = lazy(() => import('./mobile-drawer'));
-
-const NAV_ITEMS = [
-  { to: '/words', label: 'Daftar Kata A-Z', icon: List },
-  { to: '/search', label: 'Cari', icon: Search },
-  { to: '/bantuan-terjemahan', label: 'Bantuan', icon: Languages },
-  { to: '/faq', label: 'FAQ', icon: CircleHelp },
-];
 
 export function Header() {
   const location = useLocation();
   const [menuOpened, setMenuOpened] = useState(false);
+  const { t } = useTranslation();
+  const lp = useLocalePath();
 
-  const isActive = (path: string) => location.pathname.startsWith(path);
+  const navItems = [
+    { to: lp('/words'), bare: '/words', label: t('nav_words'), icon: List },
+    { to: lp('/search'), bare: '/search', label: t('nav_search'), icon: Search },
+    {
+      to: lp('/bantuan-terjemahan'),
+      bare: '/bantuan-terjemahan',
+      label: t('nav_ask'),
+      icon: Languages,
+    },
+    { to: lp('/faq'), bare: '/faq', label: t('nav_faq'), icon: CircleHelp },
+  ];
+
+  const isActive = (bare: string) => {
+    const { path } = stripLocalePrefix(location.pathname);
+    return path === bare || path.startsWith(`${bare}/`);
+  };
 
   return (
     <Container size="md" h={60} px="md">
       <Group h={60} justify="space-between" wrap="nowrap">
         <Group gap="lg" wrap="nowrap">
-          {/* Teks "SambasKu" cukup di SEO (title/og:site_name) dan alt gambar.
-              Logo = tombol Beranda. */}
-          <Anchor component={Link} to="/" underline="never" aria-label="SambasKu">
+          <Anchor
+            component={Link}
+            to={lp('/')}
+            underline="never"
+            aria-label={t('nav_homeAria')}
+          >
             <Logo h={40} eager />
           </Anchor>
 
-          {/* Navigasi desktop */}
           <Group gap={4} visibleFrom="xs">
-            {NAV_ITEMS.map((item) => (
+            {navItems.map((item) => (
               <Anchor
-                key={item.to}
+                key={item.bare}
                 component={Link}
                 to={item.to}
                 underline="never"
                 size="sm"
-                fw={isActive(item.to) ? 600 : 400}
-                c={isActive(item.to) ? 'var(--mantine-color-text)' : 'dimmed'}
+                fw={isActive(item.bare) ? 600 : 400}
+                c={isActive(item.bare) ? 'var(--mantine-color-text)' : 'dimmed'}
                 px={8}
                 py={4}
                 style={{ borderRadius: 'var(--mantine-radius-sm)' }}
@@ -58,19 +71,18 @@ export function Header() {
         </Group>
 
         <Group gap="xs" wrap="nowrap">
-          {/* CTA Play Store - disembunyikan di layar sangat kecil biar tidak
-              berdesakan dengan toggle tema + burger. */}
+          <LanguageSwitcher />
           <Anchor
             href="https://play.google.com/store/apps/details?id=com.iamutaki.sambasku"
             target="_blank"
             rel="noopener noreferrer"
             underline="never"
             visibleFrom="xs"
-            aria-label="Dapatkan aplikasi SambasKu di Google Play"
+            aria-label={t('common_getAppAria')}
           >
             <Image
               src="/google_play.webp"
-              alt="Dapatkan di Google Play"
+              alt={t('common_getOnGooglePlay')}
               h={36}
               w="auto"
               fit="contain"
@@ -78,12 +90,11 @@ export function Header() {
             />
           </Anchor>
           <ThemeToggle />
-          {/* Menu mobile */}
           <Box hiddenFrom="xs">
             <Burger
               opened={menuOpened}
               onClick={() => setMenuOpened((v) => !v)}
-              aria-label="Buka menu navigasi"
+              aria-label={t('nav_openMenu')}
               size="sm"
             />
           </Box>

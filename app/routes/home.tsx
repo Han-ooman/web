@@ -13,23 +13,32 @@ import {
   Title,
 } from '@mantine/core';
 import { Sparkles, PlusCircle, Languages } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { Route } from './+types/home';
 import { getWordOfDay } from '../application/use-cases/word.use-case';
 import { buildHomeJsonLd, buildMetaTags } from '../application/utils/seo';
 import { env } from '../infrastructure/config/env';
 import { SearchBar } from '../presentation/components/word/search-bar';
 import { WordOfTheDayCard } from '../presentation/components/word/word-of-the-day-card';
+import {
+  DEFAULT_LOCALE,
+  isAppLocale,
+  localePath,
+} from '@/application/i18n/locales';
+import { getFixedT } from '@/application/i18n/i18n-instance';
+import { useLocalePath } from '@/application/i18n/use-locale';
 
-export function meta(_args: Route.MetaArgs) {
+export function meta({ params }: Route.MetaArgs) {
+  const locale = isAppLocale(params.locale) ? params.locale : DEFAULT_LOCALE;
+  const t = getFixedT(locale);
   return [
     ...buildMetaTags({
-      title: 'Kamus Sambas',
-      description:
-        'Kamus Sambas digital terbuka: cari kosakata Melayu Sambas, makna, terjemahan Indonesia, contoh kalimat, dan lafal. Jelajahi daftar A-Z atau kontribusi kata baru.',
-      path: '/',
+      title: t('seo_homeTitle'),
+      description: t('seo_homeDescription'),
+      path: localePath(locale, '/'),
+      locale,
     }),
-    // Hanya produksi. Staging noindex, jadi entitas ini tidak boleh ikut terbit.
-    ...(env.isProd ? [{ 'script:ld+json': buildHomeJsonLd() }] : []),
+    ...(env.isProd ? [{ 'script:ld+json': buildHomeJsonLd(locale) }] : []),
   ];
 }
 
@@ -44,11 +53,12 @@ const PLAY_STORE_URL =
 
 export default function Home() {
   const { wordOfDay } = useLoaderData<typeof loader>();
+  const { t } = useTranslation();
+    const lp = useLocalePath();
 
   return (
     <Container size="md" py={44}>
       <Stack gap={44}>
-        {/* Hero Section */}
         <Stack align="center" gap="md" maw={640} mx="auto" pt="sm">
           <Badge
             variant="light"
@@ -56,39 +66,36 @@ export default function Home() {
             leftSection={<Sparkles size={13} />}
             size="sm"
           >
-            Kamus Digital Terbuka Bahasa Sambas
+            {t('home_badge')}
           </Badge>
 
           <Title order={1} ta="center" fw={800}>
-            Kamus Sambas
+            {t('home_title')}
           </Title>
 
           <Text c="dimmed" size="lg" ta="center" maw={560}>
-            Temukan arti kata, terjemahan Indonesia, contoh kalimat, dan lafal
-            otentik bahasa Melayu Sambas.
+            {t('home_subtitle')}
           </Text>
 
           <SearchBar autoFocus />
         </Stack>
 
-        {/* Word of the Day Section */}
         {wordOfDay.word && (
           <Stack gap="xs">
             <Title order={2} size="h5" c="dimmed" tt="uppercase" fw={600}>
-              Sorotan Hari Ini
+              {t('home_wotdHeading')}
             </Title>
             <WordOfTheDayCard wordOfDay={wordOfDay} />
           </Stack>
         )}
 
-        {/* A-Z Quick Browsing */}
         <Stack gap="sm">
           <Group justify="space-between">
             <Title order={2} size="h5" c="dimmed" tt="uppercase" fw={600}>
-              Jelajah Alfabetis (A-Z)
+              {t('home_azHeading')}
             </Title>
-            <Anchor component={Link} to="/words" size="xs" c="dimmed" py={4}>
-              Lihat semua kata
+            <Anchor component={Link} to={lp('/words')} size="xs" c="dimmed" py={4}>
+              {t('home_viewAllWords')}
             </Anchor>
           </Group>
 
@@ -97,7 +104,7 @@ export default function Home() {
               <ActionIcon
                 key={letter}
                 component={Link}
-                to={`/words?q=${letter}`}
+                to={lp('/words', `?q=${letter}`)}
                 variant="default"
                 size="input-lg"
                 radius="sm"
@@ -109,50 +116,46 @@ export default function Home() {
           </Group>
         </Stack>
 
-        {/* Community Contribution CTA */}
         <Card withBorder padding="lg" radius="md">
           <Group justify="space-between" align="center" gap="lg" wrap="wrap">
             <Stack gap={4} maw={520}>
               <Title order={3} size="h4">
-                Tahu kata Sambas yang belum tercatat?
+                {t('home_ctaTitle')}
               </Title>
               <Text size="sm" c="dimmed">
-                Kamus ini dibangun secara kolaboratif bersama para penutur bahasa
-                Melayu Sambas. Siapapun dapat berkontribusi menambah kosakata baru.
+                {t('home_ctaBody')}
               </Text>
             </Stack>
 
             <Button
               component={Link}
-              to="/kontribusi"
+              to={lp('/kontribusi')}
               variant="light"
               leftSection={<PlusCircle size={16} />}
             >
-              Ajukan Kata Baru
+              {t('home_ctaButton')}
             </Button>
           </Group>
           <Text size="xs" c="dimmed">
-            Ingin tahu mengapa kamus ini ada? Baca{' '}
-            <Anchor component={Link} to="/faq">
-              FAQ
+            {t('home_ctaFaqPrefix')}{' '}
+            <Anchor component={Link} to={lp('/faq')}>
+              {t('home_ctaFaqLink')}
             </Anchor>
-            .
+            {t('home_ctaFaqSuffix')}
           </Text>
         </Card>
 
-        {/* CTA Bantuan Terjemahan → aplikasi mobile */}
         <Card withBorder padding="lg" radius="md">
           <Group justify="space-between" align="center" gap="lg" wrap="wrap">
             <Stack gap={4} maw={520}>
               <Group gap={6}>
                 <Languages size={18} />
                 <Title order={3} size="h4">
-                  Butuh bantuan terjemahan Sambas?
+                  {t('home_askTitle')}
                 </Title>
               </Group>
               <Text size="sm" c="dimmed">
-                Ajukan pertanyaan (teks atau foto) dan ikut membantu menjawab di
-                aplikasi SambasKu. Feed yang sudah tayang juga bisa dibaca di web.
+                {t('home_askBody')}
               </Text>
             </Stack>
 
@@ -162,19 +165,24 @@ export default function Home() {
                 target="_blank"
                 rel="noopener noreferrer"
                 underline="never"
-                aria-label="Dapatkan aplikasi SambasKu di Google Play"
+                aria-label={t('common_getAppAria')}
               >
                 <Image
                   src="/google_play.webp"
-                  alt="Dapatkan di Google Play"
+                  alt={t('common_getOnGooglePlay')}
                   h={40}
                   w="auto"
                   fit="contain"
                   decoding="async"
                 />
               </Anchor>
-              <Anchor component={Link} to="/bantuan-terjemahan" size="xs" c="dimmed">
-                Lihat feed bantuan terjemahan
+              <Anchor
+                component={Link}
+                to={lp('/bantuan-terjemahan')}
+                size="xs"
+                c="dimmed"
+              >
+                {t('home_askFeedLink')}
               </Anchor>
             </Stack>
           </Group>

@@ -7,40 +7,61 @@ import {
   Text,
   Title,
 } from '@mantine/core';
+import { useTranslation } from 'react-i18next';
 import type { Route } from './+types/faq';
-import { FAQ_ITEMS } from '@/application/utils/faq-content';
 import { buildFaqJsonLd, buildMetaTags } from '@/application/utils/seo';
 import { env } from '@/infrastructure/config/env';
+import {
+  DEFAULT_LOCALE,
+  isAppLocale,
+  localePath,
+} from '@/application/i18n/locales';
+import { getFixedT } from '@/application/i18n/i18n-instance';
+import { useLocalePath } from '@/application/i18n/use-locale';
 
-export function meta(_args: Route.MetaArgs) {
+export function meta({ params }: Route.MetaArgs) {
+  const locale = isAppLocale(params.locale) ? params.locale : DEFAULT_LOCALE;
+  const t = getFixedT(locale);
   return [
     ...buildMetaTags({
-      title: 'FAQ - Tentang SambasKu',
-      description:
-        'Apa itu SambasKu dan Kamus Sambas, mengapa dibuat untuk pelestarian bahasa Melayu Sambas, cara kontribusi, status Terverifikasi, dan aplikasi Android.',
-      path: '/faq',
+      title: t('seo_faqTitle'),
+      description: t('seo_faqDescription'),
+      path: localePath(locale, '/faq'),
+      locale,
     }),
-    ...(env.isProd ? [{ 'script:ld+json': buildFaqJsonLd() }] : []),
+    ...(env.isProd ? [{ 'script:ld+json': buildFaqJsonLd(locale) }] : []),
   ];
 }
 
+interface FaqItem {
+  question: string;
+  answer: string;
+}
+
 export default function FaqPage() {
+  const { t } = useTranslation();
+  const lp = useLocalePath();
+  const items = t('faq_items', { returnObjects: true }) as FaqItem[];
+  const list = Array.isArray(items) ? items : [];
+
   return (
     <Container size="sm" py={44}>
       <Stack gap="lg">
         <Stack gap="xs">
           <Title order={1} fw={800}>
-            FAQ
+            {t('faq_pageTitle')}
           </Title>
           <Text c="dimmed" size="md">
-            Kamus Digital Terbuka Bahasa Sambas - pelestarian bahasa Melayu
-            Sambas, akses terbuka, dan kontribusi komunitas. Jawaban disusun dari
-            materi yang sudah ada di SambasKu; silakan ditinjau.
+            {t('faq_intro')}
           </Text>
         </Stack>
 
-        <Accordion variant="separated" radius="md" defaultValue={FAQ_ITEMS[0]?.question}>
-          {FAQ_ITEMS.map((item) => (
+        <Accordion
+          variant="separated"
+          radius="md"
+          defaultValue={list[0]?.question}
+        >
+          {list.map((item) => (
             <Accordion.Item key={item.question} value={item.question}>
               <Accordion.Control>{item.question}</Accordion.Control>
               <Accordion.Panel>
@@ -53,17 +74,17 @@ export default function FaqPage() {
         </Accordion>
 
         <Text size="sm" c="dimmed">
-          Siap menjelajah?{' '}
-          <Anchor component={Link} to="/words">
-            Buka daftar kata A-Z
+          {t('faq_footerReady')}{' '}
+          <Anchor component={Link} to={lp('/words')}>
+            {t('faq_footerWords')}
           </Anchor>
           {' · '}
-          <Anchor component={Link} to="/kontribusi">
-            Ajukan kata baru
+          <Anchor component={Link} to={lp('/kontribusi')}>
+            {t('faq_footerContribute')}
           </Anchor>
           {' · '}
-          <Anchor component={Link} to="/">
-            Kembali ke beranda
+          <Anchor component={Link} to={lp('/')}>
+            {t('faq_footerHome')}
           </Anchor>
         </Text>
       </Stack>
