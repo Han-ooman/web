@@ -26,6 +26,7 @@ export async function loader() {
   const staticRoutes = [
     { path: '', priority: '1.0', changefreq: 'daily' },
     { path: '/words', priority: '0.9', changefreq: 'daily' },
+    { path: '/bantuan-terjemahan', priority: '0.7', changefreq: 'daily' },
     { path: '/faq', priority: '0.8', changefreq: 'monthly' },
     { path: '/privacy-policy', priority: '0.5', changefreq: 'yearly' },
     { path: '/hapus-akun', priority: '0.4', changefreq: 'yearly' },

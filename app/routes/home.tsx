@@ -7,11 +7,12 @@ import {
   Card,
   Container,
   Group,
+  Image,
   Stack,
   Text,
   Title,
 } from '@mantine/core';
-import { Sparkles, PlusCircle } from 'lucide-react';
+import { Sparkles, PlusCircle, Languages } from 'lucide-react';
 import type { Route } from './+types/home';
 import { getWordOfDay } from '../application/use-cases/word.use-case';
 import { buildHomeJsonLd, buildMetaTags } from '../application/utils/seo';
@@ -38,6 +39,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 const ALPHABETS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const PLAY_STORE_URL =
+  'https://play.google.com/store/apps/details?id=com.iamutaki.sambasku';
 
 export default function Home() {
   const { wordOfDay } = useLoaderData<typeof loader>();
@@ -135,6 +138,46 @@ export default function Home() {
             </Anchor>
             .
           </Text>
+        </Card>
+
+        {/* CTA Bantuan Terjemahan → aplikasi mobile */}
+        <Card withBorder padding="lg" radius="md">
+          <Group justify="space-between" align="center" gap="lg" wrap="wrap">
+            <Stack gap={4} maw={520}>
+              <Group gap={6}>
+                <Languages size={18} />
+                <Title order={3} size="h4">
+                  Butuh bantuan terjemahan Sambas?
+                </Title>
+              </Group>
+              <Text size="sm" c="dimmed">
+                Ajukan pertanyaan (teks atau foto) dan ikut membantu menjawab di
+                aplikasi SambasKu. Feed yang sudah tayang juga bisa dibaca di web.
+              </Text>
+            </Stack>
+
+            <Stack gap="xs" align="flex-end">
+              <Anchor
+                href={PLAY_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                underline="never"
+                aria-label="Dapatkan aplikasi SambasKu di Google Play"
+              >
+                <Image
+                  src="/google_play.webp"
+                  alt="Dapatkan di Google Play"
+                  h={40}
+                  w="auto"
+                  fit="contain"
+                  decoding="async"
+                />
+              </Anchor>
+              <Anchor component={Link} to="/bantuan-terjemahan" size="xs" c="dimmed">
+                Lihat feed bantuan terjemahan
+              </Anchor>
+            </Stack>
+          </Group>
         </Card>
       </Stack>
     </Container>

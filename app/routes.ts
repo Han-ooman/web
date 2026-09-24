@@ -4,6 +4,8 @@ export default [
   index('routes/home.tsx'),
   route('search', 'routes/search.tsx'),
   route('kontribusi', 'routes/kontribusi.tsx'),
+  route('bantuan-terjemahan', 'routes/bantuan-terjemahan.tsx'),
+  route('bantuan-terjemahan/:id', 'routes/bantuan-terjemahan.$id.tsx'),
   route('faq', 'routes/faq.tsx'),
   route('privacy-policy', 'routes/privacy-policy.tsx'),
   route('hapus-akun', 'routes/hapus-akun.tsx'),
