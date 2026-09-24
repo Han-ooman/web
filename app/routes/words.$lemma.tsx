@@ -34,8 +34,10 @@ import { getWordByLemma, getWordDetail } from '@/application/use-cases/word.use-
 import { buildMetaTags, buildWordJsonLd, buildWordSeoCopy } from '@/application/utils/seo';
 import { env } from '@/infrastructure/config/env';
 import { displayImageUrl } from '@/presentation/utils/display-image-url';
+import { pickSafePrimaryImageUrl } from '@/domain/image-content-warnings';
 import { WordTypeBadge } from '@/presentation/components/word/word-type-badge';
 import { UsageLabelsBadges } from '@/presentation/components/word/usage-labels-badges';
+import { WordImagesGallery } from '@/presentation/components/word/word-images-gallery';
 import { WordAudioPlayer } from '@/presentation/components/word/pronunciation-player';
 import { formatWordClass } from '@/application/utils/formatters';
 import {
@@ -62,8 +64,10 @@ export function meta({ data, params }: Route.MetaArgs) {
 
   const { word } = data;
   const { title, description } = buildWordSeoCopy(word, locale);
-  const rawImage = word.images.find((img) => img.is_primary)?.url ?? word.images[0]?.url;
-  const primaryImage = displayImageUrl(rawImage, { width: 1200 }) ?? rawImage;
+  const rawImage = pickSafePrimaryImageUrl(word.images);
+  const primaryImage = rawImage
+    ? (displayImageUrl(rawImage, { width: 1200 }) ?? rawImage)
+    : undefined;
 
   return buildMetaTags({
     title,
@@ -263,6 +267,12 @@ export default function WordDetailPage() {
           )}
           <Divider />
         </Stack>
+
+        <WordImagesGallery
+          wordId={word.id}
+          images={word.images}
+          lemma={word.lemma}
+        />
 
         {/* Meanings & Translations */}
         <Stack gap="md">

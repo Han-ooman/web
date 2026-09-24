@@ -12,7 +12,7 @@ import {
   Text,
   Title,
 } from '@mantine/core';
-import { ArrowRight, Languages, Smartphone } from 'lucide-react';
+import { Languages, Smartphone } from 'lucide-react';
 import type { Route } from './+types/bantuan-terjemahan';
 import { listPublishedTranslationHelps } from '@/application/use-cases/translation-help.use-case';
 import { buildMetaTags } from '@/application/utils/seo';
@@ -45,21 +45,26 @@ export function meta({ params }: Route.MetaArgs) {
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const cursor = url.searchParams.get('cursor') || undefined;
+  const sortParam = url.searchParams.get('sort');
+  const sort = sortParam === 'popular' ? 'popular' : 'latest';
 
   try {
     const res = await listPublishedTranslationHelps({
       limit: 20,
       cursor,
+      sort,
       signal: request.signal,
     });
     return {
       items: res.data,
       meta: res.meta ?? { limit: 20, next_cursor: null, has_more: false },
+      sort,
     };
   } catch {
     return {
       items: [] as TranslationHelpPublicItem[],
       meta: { limit: 20, next_cursor: null, has_more: false },
+      sort,
     };
   }
 }
@@ -85,11 +90,13 @@ function HelpCard({ item }: { item: TranslationHelpPublicItem }) {
         <Text size="sm" lineClamp={3}>
           {preview}
         </Text>
-        <Group justify="space-between" gap="xs" wrap="nowrap">
+        <Group gap="xs" wrap="nowrap" justify="space-between">
+          <Text size="xs" c="dimmed">
+            ↑ {item.upvotes ?? 0} · Saya juga ingin tahu
+          </Text>
           <Text size="xs" c="dimmed" lineClamp={1}>
             {item.username ? `@${item.username}` : 'Pengguna'} · {formatDateId(item.created_at)}
           </Text>
-          <ArrowRight size={14} opacity={0.5} />
         </Group>
       </Stack>
     </Card>
@@ -97,12 +104,20 @@ function HelpCard({ item }: { item: TranslationHelpPublicItem }) {
 }
 
 export default function BantuanTerjemahanFeedPage() {
-  const { items, meta } = useLoaderData<typeof loader>();
-  const [, setSearchParams] = useSearchParams();
+  const { items, meta, sort } = useLoaderData<typeof loader>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigation = useNavigation();
   const isLoading =
     navigation.state === 'loading' &&
     stripLocalePrefix(navigation.location.pathname).path === '/bantuan-terjemahan';
+
+  const setSort = (next: 'latest' | 'popular') => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (next === 'latest') nextParams.delete('sort');
+    else nextParams.set('sort', next);
+    nextParams.delete('cursor');
+    setSearchParams(nextParams);
+  };
 
   return (
     <Container size="md" py={44}>
@@ -151,6 +166,23 @@ export default function BantuanTerjemahanFeedPage() {
           </Group>
         </Card>
 
+        <Group gap="xs">
+          <Button
+            size="compact-sm"
+            variant={sort === 'latest' ? 'filled' : 'light'}
+            onClick={() => setSort('latest')}
+          >
+            Terbaru
+          </Button>
+          <Button
+            size="compact-sm"
+            variant={sort === 'popular' ? 'filled' : 'light'}
+            onClick={() => setSort('popular')}
+          >
+            Populer
+          </Button>
+        </Group>
+
         {isLoading ? (
           <Text c="dimmed" size="sm">
             Memuat…
@@ -187,9 +219,12 @@ export default function BantuanTerjemahanFeedPage() {
           <Group justify="center">
             <Button
               variant="default"
-              onClick={() =>
-                setSearchParams({ cursor: meta.next_cursor as string })
-              }
+              onClick={() => {
+                const next = new URLSearchParams();
+                next.set('cursor', meta.next_cursor as string);
+                if (sort === 'popular') next.set('sort', 'popular');
+                setSearchParams(next);
+              }}
             >
               Muat lebih banyak
             </Button>

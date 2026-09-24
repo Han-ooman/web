@@ -18,7 +18,7 @@ const SECURITY_HEADERS: Readonly<Record<string, string>> = {
   // connect-src memuat SEMUA tier API: browser harus boleh menghubungi tier
   // cadangan saat circuit breaker pindah (app/infrastructure/api/failover.ts).
   'Content-Security-Policy':
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https: blob:; media-src 'self' https: blob:; connect-src 'self' https://api.sambasku.com https://deno.sambasku.com https://render.sambasku.com https://sambasku-staging.iamutaki.com; frame-ancestors 'none'",
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https: blob:; media-src 'self' https: blob:; connect-src 'self' https://api.sambasku.com https://deno.sambasku.com https://render.sambasku.com https://sambasku-staging.iamutaki.com https://cloudflareinsights.com; frame-ancestors 'none'",
 };
 
 // ==== Edge cache HTML SSR (stale-while-revalidate) ====
@@ -68,11 +68,38 @@ async function render(request: Request): Promise<Response> {
   });
 }
 
-async function renderAndCache(request: Request, ctx: ExecutionContext): Promise<Response> {
+type EdgeEnv = { CF_VERSION_METADATA?: WorkerVersionMetadata };
+
+/// HTML SSR memuat URL chunk ber-hash. Cache tanpa id deploy tetap
+/// menyajikan HTML lama setelah wrangler deploy menghapus file itu (404).
+function cacheKey(request: Request, versionId: string): Request {
+  const url = new URL(request.url);
+  url.searchParams.set('__build', versionId);
+  return new Request(url.toString(), { method: 'GET' });
+}
+
+/// Yang disimpan di Cache API perlu TTL panjang supaya entry tidak dihapus.
+/// Yang dikirim ke browser harus no-cache: kalau browser menyimpan HTML
+/// sehari, deploy berikutnya membuat semua <script src="/assets/*"> 404.
+function forBrowser(response: Response, cacheStatus: string): Response {
+  const headers = new Headers(response.headers);
+  headers.set('Cache-Control', 'no-cache');
+  headers.delete('x-cached-at');
+  headers.set('x-cache', cacheStatus);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+async function renderAndCache(
+  request: Request,
+  ctx: ExecutionContext,
+  versionId: string,
+): Promise<Response> {
   const response = await render(request);
   if (response.status === 200) {
-    // Tandai waktu simpan; TTL panjang agar entry tidak dihapus cache API,
-    // keseguran dicek manual dari header saat match.
     const headers = new Headers(response.headers);
     headers.set('x-cached-at', String(Date.now()));
     headers.set('Cache-Control', `public, max-age=${STALE_MAX_S}`);
@@ -81,35 +108,37 @@ async function renderAndCache(request: Request, ctx: ExecutionContext): Promise<
     // response yang dikembalikan ke klien melempar error. put di waitUntil
     // supaya klien tidak menunggu penulisan cache.
     const forCache = new Response(response.clone().body, { status: 200, headers });
-    ctx.waitUntil(edgeCache.put(request, forCache));
+    ctx.waitUntil(edgeCache.put(cacheKey(request, versionId), forCache));
   }
   return response;
 }
 
 export default {
-  async fetch(request, _env, ctx): Promise<Response> {
+  async fetch(request, env: EdgeEnv, ctx): Promise<Response> {
     const { method } = request;
     const { pathname } = new URL(request.url);
 
     if (!isCacheable(method, pathname)) {
-      return render(request);
+      return forBrowser(await render(request), 'bypass');
     }
 
+    const versionId = env.CF_VERSION_METADATA?.id ?? 'dev';
+    const key = cacheKey(request, versionId);
     const freshS = freshSeconds(pathname);
-    const cached = await edgeCache.match(request);
+    const cached = await edgeCache.match(key);
     if (cached) {
       const ageS = (Date.now() - Number(cached.headers.get('x-cached-at') ?? 0)) / 1000;
-      if (ageS > freshS && ageS < STALE_MAX_S) {
-        ctx.waitUntil(renderAndCache(request, ctx));
+      if (ageS >= STALE_MAX_S) {
+        const response = await renderAndCache(request, ctx, versionId);
+        return forBrowser(response, 'miss');
       }
-      const headers = new Headers(cached.headers);
-      headers.set('x-cache', ageS <= freshS ? 'hit' : 'swr');
-      return new Response(cached.body, { status: cached.status, headers });
+      if (ageS > freshS) {
+        ctx.waitUntil(renderAndCache(request, ctx, versionId));
+      }
+      return forBrowser(cached, ageS <= freshS ? 'hit' : 'swr');
     }
 
-    const response = await renderAndCache(request, ctx);
-    const headers = new Headers(response.headers);
-    headers.set('x-cache', 'miss');
-    return new Response(response.body, { status: response.status, headers });
+    const response = await renderAndCache(request, ctx, versionId);
+    return forBrowser(response, 'miss');
   },
-} satisfies ExportedHandler;
+} satisfies ExportedHandler<EdgeEnv>;

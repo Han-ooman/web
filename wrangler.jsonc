@@ -5,6 +5,9 @@
   "compatibility_flags": ["nodejs_compat"],
   "main": "./app/worker.ts",
   "assets": {},
+  // id unik per deploy. Cache HTML SSR memakai id ini sebagai kunci,
+  // supaya HTML build lama tidak memuat chunk /assets/* yang sudah dihapus.
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
   // VITE_* di-inline saat build dari .env.[mode] (lihat env.ts), tidak lewat
   // vars runtime. Staging deploy memakai override --name sambasku-web-staging.
 }
