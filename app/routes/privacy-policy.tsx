@@ -15,17 +15,28 @@ import {
   PRIVACY_SECTIONS,
 } from '@/application/utils/privacy-policy-content';
 import { buildMetaTags } from '@/application/utils/seo';
+import {
+  DEFAULT_LOCALE,
+  isAppLocale,
+  localePath,
+} from '@/application/i18n/locales';
+import { useLocalePath } from '@/application/i18n/use-locale';
 
-export function meta(_args: Route.MetaArgs) {
+
+export function meta({ params }: Route.MetaArgs) {
+  const locale = isAppLocale(params.locale) ? params.locale : DEFAULT_LOCALE;
   return buildMetaTags({
     title: 'Kebijakan Privasi',
     description:
       'Kebijakan Privasi SambasKu: data akun, kontribusi, notifikasi, analitik Firebase, dan layanan pihak ketiga pada aplikasi Android serta situs kamus Sambas.',
-    path: '/privacy-policy',
+    path: localePath(locale, '/privacy-policy'),
+    locale,
   });
 }
 
 export default function PrivacyPolicyPage() {
+  const lp = useLocalePath();
+
   return (
     <Container size="sm" py={44}>
       <Stack gap="xl">
@@ -70,15 +81,15 @@ export default function PrivacyPolicyPage() {
         ))}
 
         <Text size="sm" c="dimmed">
-          <Anchor component={Link} to="/hapus-akun">
+          <Anchor component={Link} to={lp('/hapus-akun')}>
             Hapus akun
           </Anchor>
           {' · '}
-          <Anchor component={Link} to="/faq">
+          <Anchor component={Link} to={lp('/faq')}>
             FAQ
           </Anchor>
           {' · '}
-          <Anchor component={Link} to="/">
+          <Anchor component={Link} to={lp('/')}>
             Beranda
           </Anchor>
         </Text>

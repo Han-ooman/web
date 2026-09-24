@@ -15,7 +15,7 @@ export const PRIVACY_EFFECTIVE_DATE = '23 September 2026';
 export const PRIVACY_LAST_UPDATED = PRIVACY_EFFECTIVE_DATE;
 
 export const PRIVACY_CONTACT =
-  'Untuk pertanyaan privasi, buka isu di https://github.com/iamutaki/sambasku atau hubungi pengelola melalui saluran resmi SambasKu yang tertera di aplikasi maupun situs.';
+  'Untuk pertanyaan privasi, buka isu di https://github.com/sambasku atau hubungi pengelola melalui saluran resmi SambasKu yang tertera di aplikasi maupun situs.';
 
 export const PRIVACY_INTRO = [
   'Kebijakan Privasi ini menjelaskan bagaimana SambasKu (“kami”, “aplikasi”, atau “layanan”) mengumpulkan, menggunakan, menyimpan, dan melindungi informasi ketika Anda menggunakan situs web dan aplikasi Android SambasKu.',

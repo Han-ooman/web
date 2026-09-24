@@ -38,27 +38,40 @@ import { WordTypeBadge } from '@/presentation/components/word/word-type-badge';
 import { UsageLabelsBadges } from '@/presentation/components/word/usage-labels-badges';
 import { WordAudioPlayer } from '@/presentation/components/word/pronunciation-player';
 import { formatWordClass } from '@/application/utils/formatters';
+import {
+  DEFAULT_LOCALE,
+  isAppLocale,
+  localePath,
+  stripLocalePrefix,
+} from '@/application/i18n/locales';
+import { getFixedT } from '@/application/i18n/i18n-instance';
+import { useLocale, useLocalePath } from '@/application/i18n/use-locale';
+import { useTranslation } from 'react-i18next';
 
-export function meta({ data }: Route.MetaArgs) {
+export function meta({ data, params }: Route.MetaArgs) {
+  const locale = isAppLocale(params.locale) ? params.locale : DEFAULT_LOCALE;
+  const tWord = getFixedT(locale);
   if (!data?.word) {
     return buildMetaTags({
-      title: 'Kata Tidak Ditemukan',
-      description: 'Kata yang kamu cari tidak ditemukan di kamus.',
-      path: '/words',
+      title: tWord('word_notFoundTitle'),
+      description: tWord('word_notFoundBody'),
+      path: localePath(locale, '/words'),
+      locale,
     });
   }
 
   const { word } = data;
-  const { title, description } = buildWordSeoCopy(word);
+  const { title, description } = buildWordSeoCopy(word, locale);
   const rawImage = word.images.find((img) => img.is_primary)?.url ?? word.images[0]?.url;
   const primaryImage = displayImageUrl(rawImage, { width: 1200 }) ?? rawImage;
 
   return buildMetaTags({
     title,
     description,
-    path: `/words/${encodeURIComponent(word.lemma)}`,
+    path: localePath(locale, `/words/${encodeURIComponent(word.lemma)}`),
     image: primaryImage,
     type: 'article',
+    locale,
   });
 }
 
@@ -68,6 +81,7 @@ const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   const { lemma } = params;
+  const locale = isAppLocale(params.locale) ? params.locale : DEFAULT_LOCALE;
   if (!lemma) {
     throw new Response('Lemma kata tidak valid', { status: 400 });
   }
@@ -75,7 +89,10 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   try {
     if (ULID_RE.test(lemma)) {
       const word = await getWordDetail(lemma, request.signal);
-      throw redirect(`/words/${encodeURIComponent(word.lemma)}`, 301);
+      throw redirect(
+        localePath(locale, `/words/${encodeURIComponent(word.lemma)}`),
+        301,
+      );
     }
     const word = await getWordByLemma(lemma, request.signal);
     return { word };
@@ -90,13 +107,19 @@ export default function WordDetailPage() {
   const { word } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
   const [copied, setCopied] = useState(false);
+  const { t } = useTranslation();
+  const lp = useLocalePath();
+  const locale = useLocale();
 
   // Saat pindah ke kata terkait (route sama, :id beda) loader berjalan -
   // tampilkan skeleton agar data kata lama tidak tampil sesaat.
+  const navBare = navigation.location
+    ? stripLocalePrefix(navigation.location.pathname).path
+    : '';
   const isLoadingRelated =
     navigation.state === 'loading' &&
-    navigation.location.pathname !== '/words' &&
-    navigation.location.pathname.startsWith('/words/');
+    navBare !== '/words' &&
+    navBare.startsWith('/words/');
 
   if (isLoadingRelated) {
     return (
@@ -111,7 +134,7 @@ export default function WordDetailPage() {
     );
   }
 
-  const jsonLd = buildWordJsonLd(word);
+  const jsonLd = buildWordJsonLd(word, locale);
 
   const handleShare = async () => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -138,14 +161,14 @@ export default function WordDetailPage() {
       <Stack gap="lg">
         {/* Breadcrumb SSR - selaras BreadcrumbList JSON-LD */}
         <Group gap={6} wrap="wrap">
-          <Anchor component={Link} to="/" size="xs" c="dimmed">
-            Beranda
+          <Anchor component={Link} to={lp('/')} size="xs" c="dimmed">
+            {t('word_homeCrumb')}
           </Anchor>
           <Text size="xs" c="dimmed">
             /
           </Text>
-          <Anchor component={Link} to="/words" size="xs" c="dimmed">
-            Daftar Kata A-Z
+          <Anchor component={Link} to={lp('/words')} size="xs" c="dimmed">
+            {t('word_wordsCrumb')}
           </Anchor>
           <Text size="xs" c="dimmed">
             /
@@ -159,7 +182,7 @@ export default function WordDetailPage() {
         <Group justify="space-between" gap="md">
           <Button
             component={Link}
-            to="/words"
+            to={lp('/words')}
             variant="subtle"
             size="compact-sm"
             leftSection={<ArrowLeft size={15} />}
@@ -337,7 +360,7 @@ export default function WordDetailPage() {
                 <Badge
                   key={rel.word_id}
                   component={Link}
-                  to={`/words/${encodeURIComponent(rel.lemma)}`}
+                  to={lp(`/words/${encodeURIComponent(rel.lemma)}`)}
                   size="lg"
                   variant="outline"
                 >

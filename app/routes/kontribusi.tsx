@@ -7,11 +7,11 @@ import {
   Box,
   Button,
   Card,
-  Checkbox,
   Container,
   Divider,
   Group,
   Modal,
+  SegmentedControl,
   Skeleton,
   Paper,
   Select,
@@ -27,6 +27,13 @@ import { BookOpenText, Check, Info, Plus, Send, Trash2 } from 'lucide-react';
 import type { Route } from './+types/kontribusi';
 import { buildMetaTags } from '../application/utils/seo';
 import {
+  DEFAULT_LOCALE,
+  isAppLocale,
+  localePath,
+} from '@/application/i18n/locales';
+import { useLocalePath } from '@/application/i18n/use-locale';
+
+import {
   lookupKbbi,
   searchWords,
   type KbbiSuggestion,
@@ -36,10 +43,10 @@ import type { WordSummary } from '../domain/entities/word.entity';
 import {
   hasConflictingUsageLabels,
   REGISTER_LABELS,
-  USAGE_LABEL_LABELS,
   WARNING_LABELS,
   type UsageLabel,
 } from '../domain/usage-labels';
+import { UsageLabelChips } from '../presentation/components/word/usage-label-chips';
 import {
   listDialects,
   listLanguages,
@@ -50,12 +57,14 @@ import {
   pickUmumWordClassId,
 } from '../application/use-cases/reference.use-case';
 
-export function meta(_args: Route.MetaArgs) {
+export function meta({ params }: Route.MetaArgs) {
+  const locale = isAppLocale(params.locale) ? params.locale : DEFAULT_LOCALE;
   return buildMetaTags({
     title: 'Kontribusi Kata',
     description:
       'Bantu pelestarian bahasa Sambas: kirim kata, makna, terjemahan, atau contoh baru untuk diverifikasi tim kamus.',
-    path: '/kontribusi',
+    path: localePath(locale, '/kontribusi'),
+    locale,
     // Halaman form = thin content, jangan diperebutkan di search engine.
     noindexAlways: true,
   });
@@ -405,6 +414,8 @@ function MaknaCard({
 }
 
 export default function KontribusiPage() {
+  const lp = useLocalePath();
+
   const { languages, wordClasses, dialects } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   const sambas = pickSambasLanguage(languages);
@@ -413,6 +424,12 @@ export default function KontribusiPage() {
   const defaultDialectId = pickDefaultDialectId(dialects);
 
   const [lemma, setLemma] = useState(searchParams.get('q')?.trim() ?? '');
+  /** false = Sederhana (lemma + terjemahan). true = form makna lengkap. */
+  const [advanced, setAdvanced] = useState(false);
+  const [standardPadanan, setStandardPadanan] = useState('');
+  const [standardDefinition, setStandardDefinition] = useState('');
+  const [standardWordClassId, setStandardWordClassId] = useState(umumWordClassId);
+  const [standardKbbiOpen, setStandardKbbiOpen] = useState(false);
   const [usageLabels, setUsageLabels] = useState<UsageLabel[]>([]);
   const [maknaList, setMaknaList] = useState<MaknaForm[]>([
     { ...emptyMakna, wordClassId: umumWordClassId },
@@ -423,13 +440,32 @@ export default function KontribusiPage() {
 
   const usageLabelsConflict = hasConflictingUsageLabels(usageLabels);
 
-  const setUsageLabelGroup = (group: readonly UsageLabel[], groupSelected: string[]) => {
-    const nextGroup = groupSelected.filter((code): code is UsageLabel =>
-      (group as readonly string[]).includes(code),
+  function switchMode(nextAdvanced: boolean) {
+    const turningOn = nextAdvanced && !advanced;
+    if (turningOn) {
+      setMaknaList((list) => {
+        const first = list[0] ?? { ...emptyMakna, wordClassId: umumWordClassId };
+        // Jangan timpa makna yang sudah diisi user di mode Lengkap.
+        const alreadyFilled =
+          first.padanan.trim().length > 0 || first.definition.trim().length > 0;
+        if (alreadyFilled) return list.length ? list : [first];
+        const seeded: MaknaForm = {
+          ...first,
+          padanan: standardPadanan.trim() || first.padanan,
+          definition: standardDefinition.trim() || first.definition,
+          wordClassId: standardWordClassId || first.wordClassId || umumWordClassId,
+        };
+        return list.length ? [seeded, ...list.slice(1)] : [seeded];
+      });
+    }
+    setAdvanced(nextAdvanced);
+  }
+
+  function toggleUsageLabel(code: UsageLabel) {
+    setUsageLabels((prev) =>
+      prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code],
     );
-    const outside = usageLabels.filter((code) => !(group as readonly string[]).includes(code));
-    setUsageLabels([...outside, ...nextGroup]);
-  };
+  }
 
   // ==== Cek duplikat live (debounce 400ms) ====
   // Lemma yang sudah tayang → tawarkan lihat halamannya / ajukan makna
@@ -468,18 +504,18 @@ export default function KontribusiPage() {
       setError('Halus dan Kasar tidak bisa dipilih bersamaan.');
       return;
     }
+    if (!advanced) {
+      if (!standardPadanan.trim()) {
+        setError('Isi terjemahan bahasa Indonesia.');
+        return;
+      }
+    }
     setSubmitting(true);
     try {
       const word = lemma.trim();
-      await apiClient('/contributions/words', {
-        method: 'POST',
-        body: JSON.stringify({
-          lemma: word,
-          language_id: sambas?.id,
-          ...(defaultDialectId ? { dialect_id: defaultDialectId } : {}),
-          word_type: 'word',
-          usage_labels: usageLabels,
-          meanings: maknaList.map((m, i) => ({
+      const def = standardDefinition.trim();
+      const meanings = advanced
+        ? maknaList.map((m, i) => ({
             word_class_id: m.wordClassId,
             definition: m.definition.trim(),
             is_have_definition: true,
@@ -506,12 +542,41 @@ export default function KontribusiPage() {
                   ],
                 }
               : {}),
-          })),
+          }))
+        : [
+            {
+              word_class_id: standardWordClassId || umumWordClassId,
+              definition: def || '-',
+              is_have_definition: def.length > 0,
+              is_have_translation: true,
+              order_index: 1,
+              translations: [
+                {
+                  language_id: indonesia?.id,
+                  translation_text: standardPadanan.trim(),
+                  translation_type: 'direct' as const,
+                },
+              ],
+            },
+          ];
+
+      await apiClient('/contributions/words', {
+        method: 'POST',
+        body: JSON.stringify({
+          lemma: word,
+          language_id: sambas?.id,
+          ...(defaultDialectId ? { dialect_id: defaultDialectId } : {}),
+          word_type: 'word',
+          usage_labels: usageLabels,
+          meanings,
         }),
       });
       setSuccess(word);
       setLemma('');
       setUsageLabels([]);
+      setStandardPadanan('');
+      setStandardDefinition('');
+      setStandardWordClassId(umumWordClassId);
       setMaknaList([{ ...emptyMakna, wordClassId: umumWordClassId }]);
     } catch (err) {
       if (err instanceof AppError && err.details?.length) {
@@ -553,7 +618,7 @@ export default function KontribusiPage() {
                 </Text>
                 <Text size="sm" c="dimmed" lh={1.55}>
                   Kata belum tayang. Tim akan memeriksanya dulu, lalu menampilkannya di{' '}
-                  <Anchor component={Link} to="/words" size="sm">
+                  <Anchor component={Link} to={lp('/words')} size="sm">
                     daftar kata
                   </Anchor>
                   . Kalau kata yang sama sudah ada, makna baru akan digabungkan ke
@@ -573,9 +638,24 @@ export default function KontribusiPage() {
         <Card withBorder radius="md" padding="lg">
           <form onSubmit={onSubmit}>
             <Stack gap="md">
+              <Stack gap={6}>
+                <Text size="sm" fw={500}>
+                  Cara mengisi
+                </Text>
+                <SegmentedControl
+                  fullWidth
+                  value={advanced ? 'lengkap' : 'sederhana'}
+                  onChange={(v) => switchMode(v === 'lengkap')}
+                  data={[
+                    { label: 'Sederhana', value: 'sederhana' },
+                    { label: 'Lengkap', value: 'lengkap' },
+                  ]}
+                />
+              </Stack>
+
               <TextInput
-                label="Kata Sambas"
-                placeholder="mis. kata"
+                label="Kata / ungkapan Sambas"
+                placeholder="Isi kata, peribahasa, atau ungkapan"
                 required
                 value={lemma}
                 onChange={(e) => setLemma(e.currentTarget.value)}
@@ -590,7 +670,7 @@ export default function KontribusiPage() {
                 >
                   <Anchor
                     component={Link}
-                    to={`/words/${encodeURIComponent(exact.lemma)}`}
+                    to={lp(`/words/${encodeURIComponent(exact.lemma)}`)}
                     size="sm"
                     fw={600}
                   >
@@ -610,7 +690,7 @@ export default function KontribusiPage() {
                       {i > 0 && ', '}
                       <Anchor
                         component={Link}
-                        to={`/words/${encodeURIComponent(w.lemma)}`}
+                        to={lp(`/words/${encodeURIComponent(w.lemma)}`)}
                         size="sm"
                       >
                         {w.lemma}
@@ -620,39 +700,77 @@ export default function KontribusiPage() {
                 </Alert>
               )}
 
+              {!advanced && (
+                <Stack gap="md">
+                  <TextInput
+                    label="Terjemahan Indonesia"
+                    placeholder="Satu kata/frasa setara di Indonesia"
+                    description="Tekan ikon buku untuk mencari definisi di KBBI"
+                    required
+                    value={standardPadanan}
+                    onChange={(e) => setStandardPadanan(e.currentTarget.value)}
+                    rightSectionWidth={44}
+                    rightSection={
+                      <Tooltip label="Cari definisi di KBBI" position="top" withArrow>
+                        <ActionIcon
+                          variant="subtle"
+                          onClick={() => setStandardKbbiOpen(true)}
+                          aria-label="Cari definisi di KBBI"
+                          style={{ marginRight: 6 }}
+                        >
+                          <BookOpenText size={16} />
+                        </ActionIcon>
+                      </Tooltip>
+                    }
+                  />
+
+                  <KbbiLookupModal
+                    opened={standardKbbiOpen}
+                    onClose={() => setStandardKbbiOpen(false)}
+                    initialQuery={standardPadanan.trim()}
+                    onSelect={(s) => {
+                      const wc = matchWordClass(s, wordClasses);
+                      setStandardPadanan(s.lemma.trim() || standardPadanan);
+                      setStandardDefinition(s.definition);
+                      if (wc?.id) setStandardWordClassId(wc.id);
+                    }}
+                  />
+
+                  {standardDefinition.trim().length > 0 && (
+                    <Stack gap={4}>
+                      <Text size="sm" fw={500}>
+                        Penjelasan arti
+                      </Text>
+                      <Paper withBorder radius="sm" p="sm" bg="var(--mantine-color-body)">
+                        <Text size="sm">{standardDefinition}</Text>
+                      </Paper>
+                      <Text size="xs" c="dimmed">
+                        Diisi dari KBBI. Buka mode Lengkap bila ingin mengedit.
+                      </Text>
+                    </Stack>
+                  )}
+                </Stack>
+              )}
+
               <Stack gap="xs">
                 <Text size="sm" fw={500}>
-                  Register & peringatan
+                  Gaya bahasa & peringatan
                 </Text>
                 <Text size="xs" c="dimmed">
-                  Opsional. Bantu pembaca paham gaya bahasa dan sensitivitas isi.
+                  Opsional. Ketuk yang sesuai — bantu pembaca paham gaya dan sensitivitas isi.
                 </Text>
-                <Checkbox.Group
-                  label="Register"
-                  value={usageLabels.filter((code) =>
-                    (REGISTER_LABELS as readonly string[]).includes(code),
-                  )}
-                  onChange={(vals) => setUsageLabelGroup(REGISTER_LABELS, vals)}
-                >
-                  <Group mt={6} gap="sm" wrap="wrap">
-                    {REGISTER_LABELS.map((code) => (
-                      <Checkbox key={code} value={code} label={USAGE_LABEL_LABELS[code]} />
-                    ))}
-                  </Group>
-                </Checkbox.Group>
-                <Checkbox.Group
-                  label="Peringatan"
-                  value={usageLabels.filter((code) =>
-                    (WARNING_LABELS as readonly string[]).includes(code),
-                  )}
-                  onChange={(vals) => setUsageLabelGroup(WARNING_LABELS, vals)}
-                >
-                  <Group mt={6} gap="sm" wrap="wrap">
-                    {WARNING_LABELS.map((code) => (
-                      <Checkbox key={code} value={code} label={USAGE_LABEL_LABELS[code]} />
-                    ))}
-                  </Group>
-                </Checkbox.Group>
+                <UsageLabelChips
+                  caption="Gaya bahasa"
+                  options={REGISTER_LABELS}
+                  selected={usageLabels}
+                  onToggle={toggleUsageLabel}
+                />
+                <UsageLabelChips
+                  caption="Peringatan"
+                  options={WARNING_LABELS}
+                  selected={usageLabels}
+                  onToggle={toggleUsageLabel}
+                />
                 {usageLabelsConflict && (
                   <Text size="xs" c="red">
                     Halus dan Kasar tidak bisa dipilih bersamaan.
@@ -660,31 +778,40 @@ export default function KontribusiPage() {
                 )}
               </Stack>
 
-              <Divider label="Makna" labelPosition="center" />
+              {advanced && (
+                <>
+                  <Divider label="Makna" labelPosition="center" />
 
-              {maknaList.map((m, i) => (
-                <MaknaCard
-                  key={i}
-                  index={i}
-                  value={m}
-                  wordClassOptions={wordClassOptions}
-                  wordClasses={wordClasses}
-                  onChange={(v) => setMaknaList((list) => list.map((x, j) => (j === i ? v : x)))}
-                  onRemove={() => setMaknaList((list) => list.filter((_, j) => j !== i))}
-                  canRemove={maknaList.length > 1}
-                />
-              ))}
+                  {maknaList.map((m, i) => (
+                    <MaknaCard
+                      key={i}
+                      index={i}
+                      value={m}
+                      wordClassOptions={wordClassOptions}
+                      wordClasses={wordClasses}
+                      onChange={(v) =>
+                        setMaknaList((list) => list.map((x, j) => (j === i ? v : x)))
+                      }
+                      onRemove={() => setMaknaList((list) => list.filter((_, j) => j !== i))}
+                      canRemove={maknaList.length > 1}
+                    />
+                  ))}
 
-              <Button
-                variant="light"
-                color="gray"
-                leftSection={<Plus size={16} />}
-                onClick={() =>
-                  setMaknaList((list) => [...list, { ...emptyMakna, wordClassId: umumWordClassId }])
-                }
-              >
-                Tambah Makna Lain
-              </Button>
+                  <Button
+                    variant="light"
+                    color="gray"
+                    leftSection={<Plus size={16} />}
+                    onClick={() =>
+                      setMaknaList((list) => [
+                        ...list,
+                        { ...emptyMakna, wordClassId: umumWordClassId },
+                      ])
+                    }
+                  >
+                    Tambah Makna Lain
+                  </Button>
+                </>
+              )}
 
               <Group justify="flex-end">
                 <Button

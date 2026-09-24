@@ -1,5 +1,11 @@
 import { listWordsAtoZ } from '../application/use-cases/word.use-case';
 import { env } from '../infrastructure/config/env';
+import {
+  DEFAULT_LOCALE,
+  localePath,
+  seoLocales,
+  type AppLocale,
+} from '@/application/i18n/locales';
 
 /**
  * Anggaran SUBREQUEST, bukan cuma timeout.
@@ -17,14 +23,25 @@ import { env } from '../infrastructure/config/env';
 const PAGE_SIZE = 100;
 const MAX_PAGES = 10;
 
+function xhtmlAlternates(barePath: string): string {
+  const locales = seoLocales();
+  const lines = locales.map(
+    (l) =>
+      `    <xhtml:link rel="alternate" hreflang="${l.code}" href="${env.appUrl}${localePath(l.code as AppLocale, barePath)}" />`,
+  );
+  lines.push(
+    `    <xhtml:link rel="alternate" hreflang="x-default" href="${env.appUrl}${localePath(DEFAULT_LOCALE, barePath)}" />`,
+  );
+  return lines.join('\n');
+}
+
 export async function loader() {
-  // Sitemap hanya untuk produksi - staging noindex total.
   if (!env.isProd) {
     throw new Response('Not Found', { status: 404 });
   }
 
-  const staticRoutes = [
-    { path: '', priority: '1.0', changefreq: 'daily' },
+  const staticBare = [
+    { path: '/', priority: '1.0', changefreq: 'daily' },
     { path: '/words', priority: '0.9', changefreq: 'daily' },
     { path: '/bantuan-terjemahan', priority: '0.7', changefreq: 'daily' },
     { path: '/faq', priority: '0.8', changefreq: 'monthly' },
@@ -32,14 +49,14 @@ export async function loader() {
     { path: '/hapus-akun', priority: '0.4', changefreq: 'yearly' },
   ];
 
-  const wordPaths = new Set<string>();
+  const wordBare = new Set<string>();
 
   try {
     let cursor: string | undefined;
     for (let page = 0; page < MAX_PAGES; page++) {
       const res = await listWordsAtoZ({ limit: PAGE_SIZE, cursor });
       for (const word of res.data) {
-        wordPaths.add(`/words/${encodeURIComponent(word.lemma)}`);
+        wordBare.add(`/words/${encodeURIComponent(word.lemma)}`);
       }
       const next = res.meta?.next_cursor ?? null;
       if (!res.meta?.has_more || !next) break;
@@ -49,21 +66,46 @@ export async function loader() {
     // If API fails during sitemap generation, still serve static routes
   }
 
-  const wordEntries = [...wordPaths].map((path) => ({
-    path,
-    priority: '0.7',
-    changefreq: 'weekly',
-  }));
-
-  const allEntries = [...staticRoutes, ...wordEntries];
+  const locales = seoLocales();
   const currentDate = new Date().toISOString().split('T')[0];
 
+  type Entry = {
+    locPath: string;
+    bare: string;
+    priority: string;
+    changefreq: string;
+  };
+
+  const entries: Entry[] = [];
+  for (const s of staticBare) {
+    for (const l of locales) {
+      entries.push({
+        locPath: localePath(l.code as AppLocale, s.path === '/' ? '/' : s.path),
+        bare: s.path,
+        priority: s.priority,
+        changefreq: s.changefreq,
+      });
+    }
+  }
+  for (const bare of wordBare) {
+    for (const l of locales) {
+      entries.push({
+        locPath: localePath(l.code as AppLocale, bare),
+        bare,
+        priority: '0.7',
+        changefreq: 'weekly',
+      });
+    }
+  }
+
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${allEntries
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+${entries
   .map(
     (entry) => `  <url>
-    <loc>${env.appUrl}${entry.path}</loc>
+    <loc>${env.appUrl}${entry.locPath}</loc>
+${xhtmlAlternates(entry.bare)}
     <lastmod>${currentDate}</lastmod>
     <changefreq>${entry.changefreq}</changefreq>
     <priority>${entry.priority}</priority>

@@ -1,16 +1,12 @@
-import { Anchor, Drawer, Group, Stack } from '@mantine/core';
+import { Anchor, Box, Drawer, Group, Stack } from '@mantine/core';
 import { Search, List, CircleHelp, Languages } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
+import { useTranslation } from 'react-i18next';
+import { useLocalePath } from '@/application/i18n/use-locale';
+import { stripLocalePrefix } from '@/application/i18n/locales';
+import { LanguageSwitcherPanel } from './language-switcher';
 
-const NAV_ITEMS = [
-  { to: '/words', label: 'Daftar Kata A-Z', icon: List },
-  { to: '/search', label: 'Cari', icon: Search },
-  { to: '/bantuan-terjemahan', label: 'Bantuan', icon: Languages },
-  { to: '/faq', label: 'FAQ', icon: CircleHelp },
-];
-
-/** Drawer navigasi mobile - di-split chunk terpisah (lazy) supaya kode
- *  Drawer Mantine tidak ikut bundle halaman pertama. */
+/** Drawer navigasi mobile - di-split chunk terpisah (lazy). */
 export function MobileDrawer({
   opened,
   onClose,
@@ -19,22 +15,46 @@ export function MobileDrawer({
   onClose: () => void;
 }) {
   const location = useLocation();
-  const isActive = (path: string) => location.pathname.startsWith(path);
+  const { t } = useTranslation();
+  const lp = useLocalePath();
+
+  const navItems = [
+    { to: lp('/words'), bare: '/words', label: t('nav_words'), icon: List },
+    { to: lp('/search'), bare: '/search', label: t('nav_search'), icon: Search },
+    {
+      to: lp('/bantuan-terjemahan'),
+      bare: '/bantuan-terjemahan',
+      label: t('nav_ask'),
+      icon: Languages,
+    },
+    { to: lp('/faq'), bare: '/faq', label: t('nav_faq'), icon: CircleHelp },
+  ];
+
+  const isActive = (bare: string) => {
+    const { path } = stripLocalePrefix(location.pathname);
+    return path === bare || path.startsWith(`${bare}/`);
+  };
 
   return (
-    <Drawer opened={opened} onClose={onClose} title="Menu" padding="md" size="xs" position="right">
+    <Drawer
+      opened={opened}
+      onClose={onClose}
+      title={t('nav_menu')}
+      padding="md"
+      size="xs"
+      position="right"
+    >
       <Stack gap="xs">
-        {NAV_ITEMS.map((item) => (
+        {navItems.map((item) => (
           <Anchor
-            key={item.to}
+            key={item.bare}
             component={Link}
             to={item.to}
-            // Navigasi client-side tidak memicu onClose - tutup manual
             onClick={onClose}
             underline="never"
             size="md"
-            fw={isActive(item.to) ? 600 : 400}
-            c={isActive(item.to) ? 'var(--mantine-color-text)' : 'dimmed'}
+            fw={isActive(item.bare) ? 600 : 400}
+            c={isActive(item.bare) ? 'var(--mantine-color-text)' : 'dimmed'}
             px="sm"
             py="xs"
             style={{ borderRadius: 'var(--mantine-radius-sm)', textAlign: 'left' }}
@@ -45,6 +65,9 @@ export function MobileDrawer({
             </Group>
           </Anchor>
         ))}
+        <Box pt="md" px="xs">
+          <LanguageSwitcherPanel onPicked={onClose} />
+        </Box>
       </Stack>
     </Drawer>
   );

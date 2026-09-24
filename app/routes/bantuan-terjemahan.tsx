@@ -16,6 +16,14 @@ import { ArrowRight, Languages, Smartphone } from 'lucide-react';
 import type { Route } from './+types/bantuan-terjemahan';
 import { listPublishedTranslationHelps } from '@/application/use-cases/translation-help.use-case';
 import { buildMetaTags } from '@/application/utils/seo';
+import {
+  DEFAULT_LOCALE,
+  isAppLocale,
+  localePath,
+  stripLocalePrefix,
+} from '@/application/i18n/locales';
+import { useLocalePath } from '@/application/i18n/use-locale';
+
 import { formatDateId } from '@/application/utils/formatters';
 import { displayImageUrl } from '@/presentation/utils/display-image-url';
 import type { TranslationHelpPublicItem } from '@/domain/entities/translation-help.entity';
@@ -23,12 +31,14 @@ import type { TranslationHelpPublicItem } from '@/domain/entities/translation-he
 const PLAY_STORE_URL =
   'https://play.google.com/store/apps/details?id=com.iamutaki.sambasku';
 
-export function meta(_args: Route.MetaArgs) {
+export function meta({ params }: Route.MetaArgs) {
+  const locale = isAppLocale(params.locale) ? params.locale : DEFAULT_LOCALE;
   return buildMetaTags({
-    title: 'Bantuan Terjemahan',
+    title: 'Tanya Terjemahan',
     description:
-      'Baca permintaan bantuan terjemahan bahasa Sambas yang sudah tayang. Ajukan pertanyaan atau balas lewat aplikasi SambasKu.',
-    path: '/bantuan-terjemahan',
+      'Baca pertanyaan terjemahan bahasa Sambas yang sudah tayang. Ajukan pertanyaan atau balas lewat aplikasi SambasKu.',
+    path: localePath(locale, '/bantuan-terjemahan'),
+    locale,
   });
 }
 
@@ -55,13 +65,14 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 function HelpCard({ item }: { item: TranslationHelpPublicItem }) {
-  const preview = item.body?.trim() || 'Permintaan bantuan dengan gambar';
+  const lp = useLocalePath();
+  const preview = item.body?.trim() || 'Pertanyaan dengan gambar';
   const thumb = displayImageUrl(item.images[0]?.public_url, { width: 320, height: 200 });
 
   return (
     <Card
       component={Link}
-      to={`/bantuan-terjemahan/${encodeURIComponent(item.id)}`}
+      to={lp(`/bantuan-terjemahan/${encodeURIComponent(item.id)}`)}
       withBorder
       padding="md"
       radius="md"
@@ -91,7 +102,7 @@ export default function BantuanTerjemahanFeedPage() {
   const navigation = useNavigation();
   const isLoading =
     navigation.state === 'loading' &&
-    navigation.location.pathname === '/bantuan-terjemahan';
+    stripLocalePrefix(navigation.location.pathname).path === '/bantuan-terjemahan';
 
   return (
     <Container size="md" py={44}>
@@ -100,11 +111,11 @@ export default function BantuanTerjemahanFeedPage() {
           <Group gap="xs">
             <Languages size={22} />
             <Title order={1} fw={800}>
-              Bantuan Terjemahan
+              Tanya Terjemahan
             </Title>
           </Group>
           <Text c="dimmed" maw={560}>
-            Feed permintaan bantuan terjemahan yang sudah ditayangkan. Membaca
+            Feed pertanyaan terjemahan yang sudah ditayangkan. Membaca
             bebas di web; mengajukan atau membalas hanya lewat aplikasi SambasKu.
           </Text>
         </Stack>
@@ -114,7 +125,7 @@ export default function BantuanTerjemahanFeedPage() {
             <Stack gap={4} maw={480}>
               <Group gap={6}>
                 <Smartphone size={16} />
-                <Text fw={600}>Butuh bantuan terjemahan?</Text>
+                <Text fw={600}>Ingin tanya terjemahan?</Text>
               </Group>
               <Text size="sm" c="dimmed">
                 Ajukan pertanyaan (teks atau foto) dan balas diskusi di aplikasi
@@ -150,7 +161,7 @@ export default function BantuanTerjemahanFeedPage() {
               Belum ada yang tayang
             </Badge>
             <Text c="dimmed" ta="center" maw={420}>
-              Belum ada bantuan terjemahan yang dipublikasikan. Ajukan lewat
+              Belum ada tanya terjemahan yang dipublikasikan. Ajukan lewat
               aplikasi SambasKu.
             </Text>
             <Button

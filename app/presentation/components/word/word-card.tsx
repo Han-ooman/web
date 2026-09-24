@@ -1,15 +1,20 @@
 import { Link } from 'react-router';
 import { Badge, Card, Group, Text } from '@mantine/core';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { WordTypeBadge } from './word-type-badge';
 import { UsageLabelsBadges } from './usage-labels-badges';
 import type { WordSummary } from '@/domain/entities/word.entity';
+import { useLocalePath } from '@/application/i18n/use-locale';
 
 export function WordCard({ word }: { word: WordSummary }) {
+  const { t } = useTranslation();
+  const lp = useLocalePath();
+
   return (
     <Card
       component={Link}
-      to={`/words/${encodeURIComponent(word.lemma)}`}
+      to={lp(`/words/${encodeURIComponent(word.lemma)}`)}
       withBorder
       padding="sm"
       radius="md"
@@ -27,11 +32,11 @@ export function WordCard({ word }: { word: WordSummary }) {
               color="teal"
               leftSection={<CheckCircle2 size={13} />}
             >
-              Terverifikasi
+              {t('common_verified')}
             </Badge>
           ) : (
             <Badge size="sm" variant="light" color="yellow">
-              Menunggu pengecekan
+              {t('common_pendingReview')}
             </Badge>
           )}
           <WordTypeBadge type={word.word_type} />

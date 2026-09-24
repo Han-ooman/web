@@ -13,20 +13,31 @@ import {
   Title,
 } from '@mantine/core';
 import { Search, AlertCircle, PlusCircle, ArrowRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { Route } from './+types/search';
 import { searchWords } from '../application/use-cases/word.use-case';
 import { buildMetaTags } from '../application/utils/seo';
 import { SearchBar } from '../presentation/components/word/search-bar';
 import { WordCard } from '../presentation/components/word/word-card';
 import { WordListSkeleton } from '../presentation/components/word/word-card-skeleton';
+import {
+  DEFAULT_LOCALE,
+  isAppLocale,
+  localePath,
+  stripLocalePrefix,
+} from '@/application/i18n/locales';
+import { getFixedT } from '@/application/i18n/i18n-instance';
+import { useLocalePath } from '@/application/i18n/use-locale';
 
-export function meta({ data }: Route.MetaArgs) {
-  const query = data?.q ? `"${data.q}"` : 'Kosakata';
+export function meta({ data, params }: Route.MetaArgs) {
+  const locale = isAppLocale(params.locale) ? params.locale : DEFAULT_LOCALE;
+  const t = getFixedT(locale);
+  const query = data?.q ? `"${data.q}"` : t('seo_searchQueryFallback');
   return buildMetaTags({
-    title: `Pencarian ${query}`,
-    description: `Hasil pencarian kosakata ${query} dalam Kamus Digital Sambas-Indonesia.`,
-    path: `/search${data?.q ? `?q=${encodeURIComponent(data.q)}` : ''}`,
-    // Halaman hasil pencarian = thin content, noindex di semua environment.
+    title: t('seo_searchTitle', { query }),
+    description: t('seo_searchDescription', { query }),
+    path: `${localePath(locale, '/search')}${data?.q ? `?q=${encodeURIComponent(data.q)}` : ''}`,
+    locale,
     noindexAlways: true,
   });
 }
@@ -74,19 +85,23 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 }
 
-const WORD_TYPE_OPTIONS = [
-  { label: 'Semua', value: '' },
-  { label: 'Kata', value: 'word' },
-  { label: 'Idiom', value: 'idiom' },
-  { label: 'Peribahasa', value: 'peribahasa' },
-  { label: 'Ungkapan', value: 'ungkapan' },
-];
-
 export default function SearchPage() {
   const { q, searchIn, wordType, items, meta } = useLoaderData<typeof loader>();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigation = useNavigation();
-  const isLoading = navigation.state === 'loading' && navigation.location.pathname === '/search';
+  const { t } = useTranslation();
+    const lp = useLocalePath();
+  const isLoading =
+    navigation.state === 'loading' &&
+    stripLocalePrefix(navigation.location.pathname).path === '/search';
+
+  const typeOptions = [
+    { label: t('search_typeAll'), value: '' },
+    { label: t('search_typeWord'), value: 'word' },
+    { label: t('search_typeIdiom'), value: 'idiom' },
+    { label: t('search_typeProverb'), value: 'peribahasa' },
+    { label: t('search_typeExpression'), value: 'ungkapan' },
+  ];
 
   const handleFilterWordType = (value: string) => {
     const next = new URLSearchParams(searchParams);
@@ -95,51 +110,48 @@ export default function SearchPage() {
     } else {
       next.delete('word_type');
     }
-    next.delete('cursor'); // Reset cursor on filter change
+    next.delete('cursor');
     setSearchParams(next);
   };
 
   return (
     <Container size="md" py="xl">
       <Stack gap="lg">
-        {/* Search Header */}
         <Stack align="center" gap="md">
           <Title order={2} ta="center">
-            Pencarian Kosakata
+            {t('search_pageTitle')}
           </Title>
           <SearchBar initialQuery={q} initialDirection={searchIn} />
         </Stack>
 
-        {/* Filter Options */}
         {q && (
           <>
             <Divider />
             <Group justify="space-between" gap="md" wrap="wrap">
               <Group gap="sm">
                 <Text size="xs" c="dimmed" fw={500}>
-                  Filter tipe:
+                  {t('search_filterType')}
                 </Text>
                 <SegmentedControl
                   size="xs"
                   value={wordType ?? ''}
                   onChange={handleFilterWordType}
-                  data={WORD_TYPE_OPTIONS}
+                  data={typeOptions}
                 />
               </Group>
 
               <Group gap={4}>
                 <Text size="xs" c="dimmed">
-                  Arah:
+                  {t('search_directionLabel')}
                 </Text>
                 <Badge size="sm" variant="outline">
-                  {searchIn === 'lemma' ? 'Sambas → Indonesia' : 'Indonesia → Sambas'}
+                  {searchIn === 'lemma' ? t('search_directionLemma') : t('search_directionTranslation')}
                 </Badge>
               </Group>
             </Group>
           </>
         )}
 
-        {/* Results Area */}
         {isLoading && q ? (
           <WordListSkeleton count={5} />
         ) : !q ? (
@@ -148,17 +160,16 @@ export default function SearchPage() {
               <Search size={24} />
             </ThemeIcon>
             <Title order={4} fw={500}>
-              Ketik kata kunci untuk memulai
+              {t('search_emptyTitle')}
             </Title>
             <Text size="sm" c="dimmed" maw={400} ta="center">
-              Kamu bisa mencari kata dalam bahasa Sambas atau mencari terjemahan dari
-              bahasa Indonesia.
+              {t('search_emptyBody')}
             </Text>
           </Stack>
         ) : items.length > 0 ? (
           <Stack gap="md">
             <Text size="xs" c="dimmed">
-              Menemukan hasil untuk{' '}
+              {t('search_foundPrefix')}{' '}
               <Text span fw={600} c="var(--mantine-color-text)">
                 &quot;{q}&quot;
               </Text>
@@ -174,39 +185,40 @@ export default function SearchPage() {
               <Group justify="center" pt="sm">
                 <Button
                   component={Link}
-                  to={`/search?q=${encodeURIComponent(q)}&search_in=${searchIn}&cursor=${encodeURIComponent(meta.next_cursor)}${
-                    wordType ? `&word_type=${wordType}` : ''
-                  }`}
+                  to={lp(
+                    '/search',
+                    `?q=${encodeURIComponent(q)}&search_in=${searchIn}&cursor=${encodeURIComponent(meta.next_cursor)}${
+                      wordType ? `&word_type=${wordType}` : ''
+                    }`,
+                  )}
                   variant="light"
                   leftSection={<ArrowRight size={16} />}
                 >
-                  Halaman Berikutnya
+                  {t('common_nextPage')}
                 </Button>
               </Group>
             )}
           </Stack>
         ) : (
-          /* Empty State & Search Miss */
           <Card withBorder padding="lg" radius="md" maw={520} mx="auto">
             <Stack align="center" gap="sm" py="xs">
               <ThemeIcon size={52} variant="light" color="red" radius="xl">
                 <AlertCircle size={24} />
               </ThemeIcon>
 
-              <Title order={4}>Kata &quot;{q}&quot; belum ditemukan</Title>
+              <Title order={4}>{t('search_missTitle', { q })}</Title>
               <Text size="sm" c="dimmed" ta="center">
-                Kosakata ini belum terdaftar di kamus. Permintaan pencarianmu telah
-                dicatat untuk ditinjau oleh tim verifikator kami.
+                {t('search_missBody')}
               </Text>
 
               <Button
                 component={Link}
-                to={`/kontribusi?q=${encodeURIComponent(q)}`}
+                to={lp('/kontribusi', `?q=${encodeURIComponent(q)}`)}
                 variant="light"
                 leftSection={<PlusCircle size={16} />}
                 mt="xs"
               >
-                Ajukan Kata Ini ke Kamus
+                {t('search_missCta')}
               </Button>
             </Stack>
           </Card>

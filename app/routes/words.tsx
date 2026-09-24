@@ -13,20 +13,33 @@ import {
   Title,
 } from '@mantine/core';
 import { List, Search, ArrowRight, X, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { Route } from './+types/words';
 import { listWordsAtoZ } from '../application/use-cases/word.use-case';
 import { buildMetaTags } from '../application/utils/seo';
 import { WordCard } from '../presentation/components/word/word-card';
 import { WordListSkeleton } from '../presentation/components/word/word-card-skeleton';
 import type { WordSummary } from '../domain/entities/word.entity';
+import {
+  DEFAULT_LOCALE,
+  isAppLocale,
+  localePath,
+  stripLocalePrefix,
+} from '@/application/i18n/locales';
+import { getFixedT } from '@/application/i18n/i18n-instance';
+import { useLocalePath } from '@/application/i18n/use-locale';
 
-export function meta({ data }: Route.MetaArgs) {
-  const query = data?.q ? `Kata "${data.q}" di Kamus Sambas` : 'Daftar Kata Kamus Sambas';
+export function meta({ data, params }: Route.MetaArgs) {
+  const locale = isAppLocale(params.locale) ? params.locale : DEFAULT_LOCALE;
+  const t = getFixedT(locale);
+  const query = data?.q
+    ? t('word_listTitleQuery', { q: data.q })
+    : t('word_listTitle');
   return buildMetaTags({
     title: query,
-    description:
-      'Telusuri daftar kata Kamus Sambas dari A sampai Z. Setiap entri memuat makna, terjemahan Indonesia, dan telah diterbitkan serta diverifikasi.',
-    path: `/words${data?.q ? `?q=${encodeURIComponent(data.q)}` : ''}`,
+    description: t('seo_wordsDescription'),
+    path: `${localePath(locale, '/words')}${data?.q ? `?q=${encodeURIComponent(data.q)}` : ''}`,
+    locale,
   });
 }
 
@@ -64,7 +77,11 @@ export default function WordsPage() {
   const { q, wordType, items, meta } = useLoaderData<typeof loader>();
   const [, setSearchParams] = useSearchParams();
   const navigation = useNavigation();
-  const isLoading = navigation.state === 'loading' && navigation.location.pathname === '/words';
+  const { t } = useTranslation();
+  const lp = useLocalePath();
+  const isLoading =
+    navigation.state === 'loading' &&
+    stripLocalePrefix(navigation.location.pathname).path === '/words';
 
   const handleFilterSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -104,10 +121,10 @@ export default function WordsPage() {
                 <ThemeIcon variant="light" size="md" radius="sm">
                   <List size={16} />
                 </ThemeIcon>
-                <Title order={2}>Daftar Kata A-Z</Title>
+                <Title order={2}>{t('word_listHeading')}</Title>
               </Group>
               <Text size="sm" c="dimmed">
-                Katalog kosakata Kamus Sambas yang sudah terverifikasi dan tayang.
+                {t('word_listIntro')}
               </Text>
             </Stack>
 
@@ -117,7 +134,7 @@ export default function WordsPage() {
                 <TextInput
                   name="filter_q"
                   defaultValue={q}
-                  placeholder="Saring awalan atau kata..."
+                  placeholder={t('word_listFilterPlaceholder')}
                   size="xs"
                   w={230}
                   leftSection={<Search size={13} />}
@@ -127,7 +144,7 @@ export default function WordsPage() {
                         variant="subtle"
                         size="xs"
                         onClick={clearFilter}
-                        aria-label="Hapus filter"
+                        aria-label={t('word_listClearFilterAria')}
                       >
                         <X size={12} />
                       </ActionIcon>
@@ -135,7 +152,7 @@ export default function WordsPage() {
                   }
                 />
                 <Button type="submit" size="xs" leftSection={<Search size={13} />}>
-                  Saring
+                  {t('word_listFilterSubmit')}
                 </Button>
               </Group>
             </form>
@@ -165,7 +182,7 @@ export default function WordsPage() {
                     {letter}
                   </ThemeIcon>
                   <Text size="xs" c="dimmed" fw={500}>
-                    {groupedItems[letter].length} kata
+                    {t('word_listWordCount', { count: groupedItems[letter].length })}
                   </Text>
                 </Group>
 
@@ -182,15 +199,18 @@ export default function WordsPage() {
               <Group justify="center" pt="md">
                 <Button
                   component={Link}
-                  to={`/words?${new URLSearchParams({
-                    ...(q ? { q } : {}),
-                    ...(wordType ? { word_type: wordType } : {}),
-                    cursor: meta.next_cursor,
-                  }).toString()}`}
+                  to={lp(
+                    '/words',
+                    `?${new URLSearchParams({
+                      ...(q ? { q } : {}),
+                      ...(wordType ? { word_type: wordType } : {}),
+                      cursor: meta.next_cursor,
+                    }).toString()}`,
+                  )}
                   variant="light"
                   leftSection={<ArrowRight size={16} />}
                 >
-                  Muat Kata Berikutnya
+                  {t('word_listLoadNext')}
                 </Button>
               </Group>
             )}
@@ -201,15 +221,12 @@ export default function WordsPage() {
               <AlertCircle size={24} />
             </ThemeIcon>
             <Title order={4} ta="center">
-              {q
-                ? `Tidak ada kata yang cocok dengan "${q}"`
-                : 'Belum ada kosakata yang dimuat'}
+              {q ? t('word_listEmptyQuery', { q }) : t('word_listEmptyNone')}
             </Title>
             {q && (
               <>
                 <Text size="sm" c="dimmed" ta="center">
-                  Coba hapus saringan pencarian untuk melihat seluruh daftar
-                  kosakata.
+                  {t('word_listEmptyHint')}
                 </Text>
                 <Button
                   variant="light"
@@ -218,7 +235,7 @@ export default function WordsPage() {
                   leftSection={<X size={14} />}
                   mt="xs"
                 >
-                  Hapus Saringan
+                  {t('word_listClearFilter')}
                 </Button>
               </>
             )}

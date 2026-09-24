@@ -10,6 +10,8 @@ import {
   TextInput,
 } from '@mantine/core';
 import { Search, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { useLocalePath } from '@/application/i18n/use-locale';
 
 export interface SearchBarProps {
   initialQuery?: string;
@@ -25,13 +27,20 @@ export function SearchBar({
   const [q, setQ] = useState(initialQuery);
   const [direction, setDirection] = useState<'lemma' | 'translation'>(initialDirection);
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const lp = useLocalePath();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const query = q.trim();
     if (!query) return;
 
-    navigate(`/search?q=${encodeURIComponent(query)}&search_in=${direction}`);
+    navigate(
+      lp(
+        '/search',
+        `?q=${encodeURIComponent(query)}&search_in=${direction}`,
+      ),
+    );
   };
 
   return (
@@ -42,9 +51,7 @@ export function SearchBar({
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder={
-            direction === 'lemma'
-              ? 'Cari kosakata Sambas...'
-              : 'Cari dari bahasa Indonesia (mis. makan, kue)...'
+            direction === 'lemma' ? t('search_placeholderLemma') : t('search_placeholderTranslation')
           }
           size="md"
           leftSection={<Search size={16} />}
@@ -56,7 +63,7 @@ export function SearchBar({
                   variant="subtle"
                   size="sm"
                   onClick={() => setQ('')}
-                  aria-label="Bersihkan pencarian"
+                  aria-label={t('search_clearAria')}
                 >
                   <X size={14} />
                 </ActionIcon>
@@ -66,7 +73,7 @@ export function SearchBar({
                 size="compact-sm"
                 leftSection={<Search size={14} />}
               >
-                Cari
+                {t('search_submit')}
               </Button>
             </Group>
           }
@@ -78,12 +85,12 @@ export function SearchBar({
             value={direction}
             onChange={(value) => setDirection(value as 'lemma' | 'translation')}
             data={[
-              { value: 'lemma', label: 'Sambas → Indonesia' },
-              { value: 'translation', label: 'Indonesia → Sambas' },
+              { value: 'lemma', label: t('search_directionLemma') },
+              { value: 'translation', label: t('search_directionTranslation') },
             ]}
           />
           <Text size="xs" c="dimmed" visibleFrom="sm" style={{ whiteSpace: 'nowrap' }}>
-            Tekan Enter untuk mencari
+            {t('search_pressEnter')}
           </Text>
         </Group>
       </Stack>

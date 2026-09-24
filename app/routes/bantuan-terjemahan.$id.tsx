@@ -16,6 +16,13 @@ import { ArrowLeft, Languages, Pin, Smartphone } from 'lucide-react';
 import type { Route } from './+types/bantuan-terjemahan.$id';
 import { getTranslationHelpDetail } from '@/application/use-cases/translation-help.use-case';
 import { buildMetaTags } from '@/application/utils/seo';
+import {
+  DEFAULT_LOCALE,
+  isAppLocale,
+  localePath,
+} from '@/application/i18n/locales';
+import { useLocalePath } from '@/application/i18n/use-locale';
+
 import { formatDateId } from '@/application/utils/formatters';
 import { displayImageUrl } from '@/presentation/utils/display-image-url';
 import type { TranslationHelpReply } from '@/domain/entities/translation-help.entity';
@@ -23,27 +30,30 @@ import type { TranslationHelpReply } from '@/domain/entities/translation-help.en
 const PLAY_STORE_URL =
   'https://play.google.com/store/apps/details?id=com.iamutaki.sambasku';
 
-export function meta({ data }: Route.MetaArgs) {
+export function meta({ data, params }: Route.MetaArgs) {
+  const locale = isAppLocale(params.locale) ? params.locale : DEFAULT_LOCALE;
   if (!data?.help) {
     return buildMetaTags({
-      title: 'Bantuan Tidak Ditemukan',
-      description: 'Permintaan bantuan terjemahan tidak ditemukan atau belum tayang.',
-      path: '/bantuan-terjemahan',
+      title: 'Tanya Terjemahan Tidak Ditemukan',
+      description: 'Pertanyaan terjemahan tidak ditemukan atau belum tayang.',
+      path: localePath(locale, '/bantuan-terjemahan'),
+    locale,
     });
   }
 
   const excerpt =
     data.help.body?.trim().slice(0, 140) ||
-    'Permintaan bantuan terjemahan bahasa Sambas.';
+    'Pertanyaan terjemahan bahasa Sambas.';
   const rawImage = data.help.images[0]?.public_url;
   const ogImage = displayImageUrl(rawImage, { width: 1200 }) ?? rawImage;
 
   return buildMetaTags({
-    title: 'Bantuan Terjemahan',
+    title: 'Tanya Terjemahan',
     description: excerpt,
-    path: `/bantuan-terjemahan/${encodeURIComponent(data.help.id)}`,
+    path: localePath(locale, `/bantuan-terjemahan/${encodeURIComponent(data.help.id)}`),
     image: ogImage,
     type: 'article',
+    locale,
   });
 }
 
@@ -58,7 +68,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     return { help };
   } catch (error) {
     const status = (error as { statusCode?: number }).statusCode ?? 404;
-    throw new Response('Bantuan terjemahan tidak ditemukan', { status });
+    throw new Response('Tanya terjemahan tidak ditemukan', { status });
   }
 }
 
@@ -80,6 +90,8 @@ function sortReplies(replies: TranslationHelpReply[]): TranslationHelpReply[] {
 }
 
 export default function BantuanTerjemahanDetailPage() {
+  const lp = useLocalePath();
+
   const { help } = useLoaderData<typeof loader>();
   const replies = sortReplies(help.replies);
   const author = help.username ? `@${help.username}` : 'Pengguna';
@@ -88,20 +100,20 @@ export default function BantuanTerjemahanDetailPage() {
     <Container size="sm" py={44}>
       <Stack gap="xl">
         <Group gap={6} wrap="wrap">
-          <Anchor component={Link} to="/" size="xs" c="dimmed">
+          <Anchor component={Link} to={lp('/')} size="xs" c="dimmed">
             Beranda
           </Anchor>
           <Text size="xs" c="dimmed">
             /
           </Text>
-          <Anchor component={Link} to="/bantuan-terjemahan" size="xs" c="dimmed">
-            Bantuan Terjemahan
+          <Anchor component={Link} to={lp('/bantuan-terjemahan')} size="xs" c="dimmed">
+            Tanya Terjemahan
           </Anchor>
         </Group>
 
         <Button
           component={Link}
-          to="/bantuan-terjemahan"
+          to={lp('/bantuan-terjemahan')}
           variant="subtle"
           size="compact-sm"
           leftSection={<ArrowLeft size={15} />}
@@ -114,7 +126,7 @@ export default function BantuanTerjemahanDetailPage() {
           <Group gap="xs">
             <Languages size={20} />
             <Title order={1} fw={800} size="h2">
-              Bantuan Terjemahan
+              Tanya Terjemahan
             </Title>
           </Group>
 
@@ -136,7 +148,7 @@ export default function BantuanTerjemahanDetailPage() {
                   <Image
                     key={img.public_url}
                     src={src}
-                    alt="Lampiran bantuan terjemahan"
+                    alt="Lampiran tanya terjemahan"
                     radius="md"
                     fit="cover"
                     mah={320}
