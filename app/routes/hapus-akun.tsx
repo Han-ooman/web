@@ -62,7 +62,7 @@ export default function HapusAkunPage() {
     setSubmitting(true);
     setError(null);
     try {
-      await requestAccountDeletion(email.trim());
+      await requestAccountDeletion(email.trim().toLowerCase());
       setCodeSent(true);
     } catch (err) {
       setError(err instanceof AppError ? err.message : 'Gagal mengirim kode. Coba lagi.');
@@ -78,7 +78,7 @@ export default function HapusAkunPage() {
     setError(null);
     try {
       await confirmAccountDeletion({
-        email: email.trim(),
+        email: email.trim().toLowerCase(),
         code: codeNormalized,
         confirmation,
       });
@@ -143,6 +143,9 @@ export default function HapusAkunPage() {
                   <TextInput
                     label="Email akun"
                     type="email"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                     value={email}
                     onChange={(event) => setEmail(event.currentTarget.value)}
                     disabled={submitting || codeSent}
