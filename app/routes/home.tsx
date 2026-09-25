@@ -108,7 +108,7 @@ export default function Home() {
               <ActionIcon
                 key={letter}
                 component={Link}
-                to={lp('/words', `?letter=${letter}`)}
+                to={lp(`/huruf/${letter.toLowerCase()}`)}
                 variant="default"
                 size="input-lg"
                 radius="sm"

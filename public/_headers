@@ -1,3 +1,7 @@
+# DIHASILKAN OTOMATIS oleh plugin sambasku:generate-headers-file di vite.config.ts.
+# JANGAN diedit manual - edit app/edge/security-headers.ts lalu build ulang.
+# Nilai identik dengan yang dikirim app/worker.ts ke respons SSR.
+
 /*
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
@@ -6,10 +10,10 @@
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-origin
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://ik.imagekit.io https://cdn.jsdelivr.net https://wsrv.nl; media-src 'self' blob: https://cdn.jsdelivr.net; connect-src 'self' https://api.sambasku.com https://deno.sambasku.com https://render.sambasku.com https://cloudflareinsights.com; frame-ancestors 'none';
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://ik.imagekit.io https://cdn.jsdelivr.net https://wsrv.nl; media-src 'self' blob: https://cdn.jsdelivr.net; connect-src 'self' https://api.sambasku.com https://deno.sambasku.com https://render.sambasku.com https://cloudflareinsights.com; frame-ancestors 'none'
 
-# Asset build Vite content-hashed (root-CG3bSMYl.css dkk): nama berubah
-# setiap rebuild, aman di-cache permanen. Tanpa ini default Workers Assets
+# Asset build Vite content-hashed (root-*.css dkk): nama berubah setiap
+# rebuild, aman di-cache permanen. Tanpa ini default Workers Assets
 # = max-age=0, must-revalidate (revalidate semua tiap kunjungan).
 /assets/*
   Cache-Control: public, max-age=31536000, immutable

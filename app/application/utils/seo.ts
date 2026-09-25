@@ -1,4 +1,4 @@
-import type { WordDetail } from '@/domain/entities/word.entity';
+import type { WordDetail, WordSummary } from '@/domain/entities/word.entity';
 import { pickSafePrimaryImageUrl } from '@/domain/image-content-warnings';
 import { env } from '@/infrastructure/config/env';
 import { getFixedT } from '@/application/i18n/i18n-instance';
@@ -237,6 +237,70 @@ export function buildFaqJsonLd(localeInput?: string) {
         text: item.answer,
       },
     })),
+  };
+}
+
+/**
+ * JSON-LD halaman huruf `/{locale}/huruf/:letter`: CollectionPage (dengan
+ * ItemList dari halaman aktif) + BreadcrumbList, sejalan pola buildWordJsonLd.
+ */
+export function buildLetterJsonLd(
+  letter: string,
+  words: WordSummary[],
+  localeInput?: string,
+) {
+  const locale = resolveLocale(localeInput);
+  const t = getFixedT(locale);
+  const letterUrl = `${env.appUrl}${localePath(locale, `/huruf/${letter}`)}`;
+  const wordsIndexUrl = `${env.appUrl}${localePath(locale, '/words')}`;
+  const homeUrl = `${env.appUrl}${localePath(locale, '/')}`;
+
+  const collection = {
+    '@type': 'CollectionPage',
+    '@id': `${letterUrl}#collection`,
+    name: t('letter_heading', { letter: letter.toUpperCase() }),
+    url: letterUrl,
+    isPartOf: { '@id': `${homeUrl}#website` },
+    inLanguage: locale,
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: words.map((word, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: word.lemma,
+        url: `${env.appUrl}${localePath(locale, `/words/${encodeURIComponent(word.lemma)}`)}`,
+      })),
+    },
+  };
+
+  const breadcrumb = {
+    '@type': 'BreadcrumbList',
+    '@id': `${letterUrl}#breadcrumb`,
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: t('word_homeCrumb'),
+        item: homeUrl,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: t('word_wordsCrumb'),
+        item: wordsIndexUrl,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: t('letter_heading', { letter: letter.toUpperCase() }),
+        item: letterUrl,
+      },
+    ],
+  };
+
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [collection, breadcrumb],
   };
 }
 

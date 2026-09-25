@@ -136,7 +136,10 @@ export default function WordsPage() {
                 <ThemeIcon variant="light" size="md" radius="sm">
                   <List size={16} />
                 </ThemeIcon>
-                <Title order={2}>{t('word_listHeading')}</Title>
+                {/* h1 halaman ini (QA UX-08); size="h2" pertahankan tampilan */}
+                <Title order={1} size="h2">
+                  {t('word_listHeading')}
+                </Title>
               </Group>
               <Text size="sm" c="dimmed">
                 {letter

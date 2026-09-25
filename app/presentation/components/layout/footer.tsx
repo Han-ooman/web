@@ -8,7 +8,7 @@ import { useLocalePath } from '@/application/i18n/use-locale';
 export function Footer() {
   const currentYear = new Date().getFullYear();
   const { t } = useTranslation();
-    const lp = useLocalePath();
+  const lp = useLocalePath();
 
   return (
     <Container size="md" py="md">
@@ -21,7 +21,13 @@ export function Footer() {
         </Group>
 
         <Group gap="lg" justify="center">
-          <Anchor component={Link} to={lp('/words')} size="xs" c="dimmed" py={4}>
+          <Anchor
+            component={Link}
+            to={lp('/words')}
+            size="xs"
+            c="dimmed"
+            py={4}
+          >
             {t('nav_words')}
           </Anchor>
           <Anchor component={Link} to={lp('/faq')} size="xs" c="dimmed" py={4}>
@@ -36,13 +42,19 @@ export function Footer() {
           >
             {t('nav_privacy')}
           </Anchor>
-          <Anchor component={Link} to={lp('/search')} size="xs" c="dimmed" py={4}>
+          <Anchor
+            component={Link}
+            to={lp('/search')}
+            size="xs"
+            c="dimmed"
+            py={4}
+          >
             {t('nav_searchFull')}
           </Anchor>
           <Anchor
             href="https://github.com/sambasku"
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             size="xs"
             c="dimmed"
           >

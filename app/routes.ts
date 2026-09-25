@@ -8,6 +8,8 @@ import { type RouteConfig, index, route } from '@react-router/dev/routes';
 export default [
   index('routes/root-redirect.tsx'),
   route('sitemap.xml', 'routes/sitemap[.]xml.ts'),
+  route('sitemap-static.xml', 'routes/sitemap-static[.]xml.ts'),
+  route('sitemap-words/:letter', 'routes/sitemap-words.$letter.ts'),
   route('robots.txt', 'routes/robots[.]txt.ts'),
   route('reset-password', 'routes/reset-password.tsx'),
 
@@ -38,6 +40,7 @@ export default [
     route('hapus-akun', 'routes/hapus-akun.tsx'),
     route('words', 'routes/words.tsx'),
     route('words/:lemma', 'routes/words.$lemma.tsx'),
+    route('huruf/:letter', 'routes/huruf.$letter.tsx'),
     route('users/:username', 'routes/users.$username.tsx'),
   ]),
 ] satisfies RouteConfig;

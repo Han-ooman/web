@@ -16,6 +16,10 @@ import {
   type StockPhotoProvider,
 } from '@/infrastructure/api/share-backgrounds-api';
 import { MediaExplorerModal } from './media-explorer-modal';
+import {
+  displayImageUrl,
+  isAllowedDisplayImageUrl,
+} from '@/presentation/utils/display-image-url';
 
 export const MAX_CONTRIBUTION_IMAGES = 3;
 
@@ -42,11 +46,23 @@ export function ContributionImagesField({
   onChange,
 }: ContributionImagesFieldProps) {
   const [explorerOpen, setExplorerOpen] = useState(false);
+  const [rejected, setRejected] = useState<string | null>(null);
   const atLimit = images.length >= MAX_CONTRIBUTION_IMAGES;
 
   const addStock = (item: ShareBackgroundItem) => {
     if (images.length >= MAX_CONTRIBUTION_IMAGES) return;
     if (images.some((img) => img.provider_file_id === item.id)) return;
+    // API meneruskan `url`/`preview_url` provider apa adanya, jadi hostnya
+    // bisa apa saja. Tolak yang bukan https + host allowlist sebelum URL masuk
+    // state form (pentest BH-03). Validasi API tetap yang utama; ini hanya
+    // supaya contributor tidak mengirim payload yang pasti ditolak.
+    if (!isAllowedDisplayImageUrl(item.url)) {
+      setRejected(
+        `Foto dari ${STOCK_PROVIDER_LABELS[item.provider] ?? item.provider} ditolak: host gambar tidak dikenal.`,
+      );
+      return;
+    }
+    setRejected(null);
     const photographer =
       item.photographer.trim() ||
       STOCK_PROVIDER_LABELS[item.provider] ||
@@ -120,7 +136,7 @@ export function ContributionImagesField({
                 }}
               >
                 <img
-                  src={img.url}
+                  src={displayImageUrl(img.url, { width: 144, height: 144 })}
                   alt={img.alt_text}
                   style={{
                     width: '100%',
@@ -187,6 +203,12 @@ export function ContributionImagesField({
           ? `Maksimal ${MAX_CONTRIBUTION_IMAGES} foto`
           : 'Pilih dari Media Explorer'}
       </Button>
+
+      {rejected ? (
+        <Text size="xs" c="red">
+          {rejected}
+        </Text>
+      ) : null}
 
       <MediaExplorerModal
         open={explorerOpen}

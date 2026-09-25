@@ -36,7 +36,12 @@ const theme = createTheme({
 });
 
 export const links: Route.LinksFunction = () => [
-  { rel: 'icon', href: '/favicon-192.png', type: 'image/png', sizes: '192x192' },
+  {
+    rel: 'icon',
+    href: '/favicon-192.png',
+    type: 'image/png',
+    sizes: '192x192',
+  },
   { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
   {
     rel: 'preload',
@@ -91,7 +96,13 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
       details = t('errors_notFoundDetail');
     } else {
       message = t('errors_errorStatus', { status: error.status });
-      details = error.statusText || details;
+      // `statusText` datang dari Response yang dilempar loader dan sepenuhnya
+      // di luar kendali kita. Untuk 5xx-ish ia boleh memuat detail internal
+      // (pesan fetch, nama host, dsb), jadi pakai teks generik - tidak pernah
+      // render apa pun dari sumber tak tepercaya di status server (pentest
+      // BH-13). Di bawah 500 statusText selalu literal HTTP, jadi aman.
+      details =
+        error.status >= 500 ? t('errors_generic') : error.statusText || details;
     }
   } else if (error instanceof AppError) {
     // Hanya pesan error aplikasi (milik kita, user-facing) yang boleh
