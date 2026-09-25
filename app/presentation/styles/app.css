@@ -81,10 +81,61 @@ body {
    ([data-...] saja kalah dan diabaikan). */
 :root[data-mantine-color-scheme='light'] {
   --mantine-color-dimmed: var(--mantine-color-gray-7);
+  /* Placeholder gray-5 (#adb5bd) hanya ~2.1:1 di atas putih. */
+  --mantine-color-placeholder: var(--mantine-color-gray-7);
+  /* Badge variant light: teks shade-9 di atas shade-1 gagal AA untuk warna
+     terang (hijau "Baru Pekan Ini" ~3.8:1, kuning pending ~2.7:1). Hex ini
+     lolos 4.5:1 pada shade-1 dan shade-2 (hover), masih dalam keluarga hue. */
+  --mantine-color-green-light-color: #237133;
+  --mantine-color-teal-light-color: #077050;
+  --mantine-color-lime-light-color: #48730a;
+  --mantine-color-yellow-light-color: #a35400;
+  --mantine-color-orange-light-color: #ab390c;
+  /* Pill outline (tanggal, kelas kata) memakai blue-6, ~3.6:1 di atas putih. */
+  --mantine-color-blue-outline: var(--mantine-color-blue-9);
+}
+
+/* Skip-link: tersembunyi sampai fokus keyboard (UX-13). */
+.skip-link {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link:focus {
+  position: fixed;
+  top: 8px;
+  inset-inline-start: 8px;
+  z-index: 400;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 8px 14px;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+  background: var(--mantine-color-body);
+  color: var(--mantine-color-text);
+  border: 2px solid var(--mantine-color-blue-filled);
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+#main:focus {
+  outline: none;
 }
 
 :root[data-mantine-color-scheme='dark'] {
   --mantine-color-dimmed: var(--mantine-color-dark-1);
+  /* Placeholder dark-3 (#696969) hanya ~2.5:1 di atas input dark-6. */
+  --mantine-color-placeholder: var(--mantine-color-dark-1);
 }
 
 /* QR: light = black on white; dark = inverted for theme fit (still scannable). */

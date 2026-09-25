@@ -18,6 +18,8 @@
   "common_tagline": "Kamus Sambas, kamus digital bahasa Sambas & Indonesia",
   "nav_menu": "Menu",
   "nav_openMenu": "Buka menu navigasi",
+  "nav_closeMenu": "Tutup menu",
+  "a11y_skipToContent": "Lompat ke konten",
   "nav_homeAria": "SambasKu",
   "nav_words": "Daftar Kata A-Z",
   "nav_search": "Cari",

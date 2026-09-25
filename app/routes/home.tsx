@@ -66,7 +66,7 @@ export default function Home() {
         <Stack align="center" gap="md" maw={640} mx="auto" pt="sm">
           <Badge
             variant="light"
-            color="amber"
+            color="yellow"
             leftSection={<Sparkles size={13} />}
             size="sm"
           >

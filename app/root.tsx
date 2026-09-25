@@ -75,6 +75,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {/* theme-color mengikuti skema warna aktif (address bar mobile) */}
         <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
         <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1b1e" />
+        {/* iOS Add to Home Screen: tanpa trio ini ikon tetap membuka tab Safari. */}
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="SambasKu" />
         <Meta />
         <Links />
         <ColorSchemeScript defaultColorScheme="auto" />

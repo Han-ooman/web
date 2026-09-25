@@ -30,7 +30,7 @@ export function WordOfTheDayCard({ wordOfDay }: { wordOfDay: WordOfTheDay }) {
             <Badge
               size="sm"
               variant="light"
-              color="amber"
+              color="yellow"
               leftSection={<Sparkles size={13} />}
             >
               Kata Hari Ini

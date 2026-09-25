@@ -58,12 +58,15 @@ export default function LocaleLayout() {
     <I18nextProvider i18n={i18n}>
       {/* Footer di luar AppShell: AppShell.Footer Mantine v9 fixed
           by default (menutupi konten) dan tanpa opsi non-fixed. */}
+      <a className="skip-link" href="#main">
+        {i18n.t('a11y_skipToContent')}
+      </a>
       <AppShell header={{ height: 60 }} padding={0}>
         <AppShell.Header>
           <Header />
         </AppShell.Header>
         <RouteProgressBar />
-        <AppShell.Main>
+        <AppShell.Main id="main" tabIndex={-1}>
           <Outlet />
         </AppShell.Main>
       </AppShell>

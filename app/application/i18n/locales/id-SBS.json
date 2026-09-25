@@ -18,6 +18,8 @@
   "common_tagline": "Kamus Sambas, kamus digital bahase Sambas & Indonesia",
   "nav_menu": "Mannu",
   "nav_openMenu": "Bukak mannu napigasi",
+  "nav_closeMenu": "Tutup mannu",
+  "a11y_skipToContent": "Lompat ke isi",
   "nav_homeAria": "SambasKu",
   "nav_words": "Daftar Kate A-Z",
   "nav_search": "Carek",

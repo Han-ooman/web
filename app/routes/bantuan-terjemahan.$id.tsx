@@ -193,7 +193,7 @@ export default function BantuanTerjemahanDetailPage() {
                       {reply.is_pinned ? (
                         <Badge
                           size="sm"
-                          color="amber"
+                          color="yellow"
                           variant="light"
                           leftSection={<Pin size={11} />}
                         >
