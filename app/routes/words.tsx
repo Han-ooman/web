@@ -34,11 +34,19 @@ export function meta({ data, params }: Route.MetaArgs) {
   const t = getFixedT(locale);
   const query = data?.q
     ? t('word_listTitleQuery', { q: data.q })
-    : t('word_listTitle');
+    : data?.letter
+      ? t('word_listTitleQuery', { q: data.letter })
+      : t('word_listTitle');
+  const search =
+    data?.q
+      ? `?q=${encodeURIComponent(data.q)}`
+      : data?.letter
+        ? `?letter=${encodeURIComponent(data.letter)}`
+        : '';
   return buildMetaTags({
     title: query,
     description: t('seo_wordsDescription'),
-    path: `${localePath(locale, '/words')}${data?.q ? `?q=${encodeURIComponent(data.q)}` : ''}`,
+    path: `${localePath(locale, '/words')}${search}`,
     locale,
   });
 }
@@ -46,26 +54,31 @@ export function meta({ data, params }: Route.MetaArgs) {
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const q = url.searchParams.get('q')?.trim() ?? '';
+  const rawLetter = url.searchParams.get('letter')?.trim() ?? '';
+  const letter = /^[A-Za-z]$/.test(rawLetter) ? rawLetter.toUpperCase() : '';
   const wordType = url.searchParams.get('word_type') || undefined;
   const cursor = url.searchParams.get('cursor') || undefined;
 
   try {
     const res = await listWordsAtoZ({
-      q,
+      q: letter ? undefined : q || undefined,
+      letter: letter || undefined,
       wordType,
       cursor,
       limit: 25,
       signal: request.signal,
     });
     return {
-      q,
+      q: letter ? '' : q,
+      letter,
       wordType,
       items: res.data,
       meta: res.meta ?? { limit: 25, next_cursor: null, has_more: false },
     };
   } catch {
     return {
-      q,
+      q: letter ? '' : q,
+      letter,
       wordType,
       items: [],
       meta: { limit: 25, next_cursor: null, has_more: false },
@@ -74,7 +87,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export default function WordsPage() {
-  const { q, wordType, items, meta } = useLoaderData<typeof loader>();
+  const { q, letter, wordType, items, meta } = useLoaderData<typeof loader>();
   const [, setSearchParams] = useSearchParams();
   const navigation = useNavigation();
   const { t } = useTranslation();
@@ -98,6 +111,8 @@ export default function WordsPage() {
     if (wordType) next.set('word_type', wordType);
     setSearchParams(next);
   };
+
+  const activeFilter = q || letter;
 
   // Group items by their first character
   const groupedItems = items.reduce<Record<string, WordSummary[]>>((acc, word) => {
@@ -124,7 +139,9 @@ export default function WordsPage() {
                 <Title order={2}>{t('word_listHeading')}</Title>
               </Group>
               <Text size="sm" c="dimmed">
-                {t('word_listIntro')}
+                {letter
+                  ? t('word_listTitleQuery', { q: letter })
+                  : t('word_listIntro')}
               </Text>
             </Stack>
 
@@ -134,12 +151,13 @@ export default function WordsPage() {
                 <TextInput
                   name="filter_q"
                   defaultValue={q}
+                  key={q || letter || 'empty'}
                   placeholder={t('word_listFilterPlaceholder')}
                   size="xs"
                   w={230}
                   leftSection={<Search size={13} />}
                   rightSection={
-                    q ? (
+                    activeFilter ? (
                       <ActionIcon
                         variant="subtle"
                         size="xs"
@@ -165,8 +183,8 @@ export default function WordsPage() {
           <WordListSkeleton count={6} />
         ) : items.length > 0 ? (
           <Stack gap="xl">
-            {groupKeys.map((letter) => (
-              <Stack key={letter} gap="sm">
+            {groupKeys.map((groupLetter) => (
+              <Stack key={groupLetter} gap="sm">
                 <Group
                   gap="xs"
                   pt="xs"
@@ -179,15 +197,15 @@ export default function WordsPage() {
                   }}
                 >
                   <ThemeIcon size="sm" variant="filled" radius="sm" fw={700}>
-                    {letter}
+                    {groupLetter}
                   </ThemeIcon>
                   <Text size="xs" c="dimmed" fw={500}>
-                    {t('word_listWordCount', { count: groupedItems[letter].length })}
+                    {t('word_listWordCount', { count: groupedItems[groupLetter].length })}
                   </Text>
                 </Group>
 
                 <Stack gap="xs">
-                  {groupedItems[letter].map((word) => (
+                  {groupedItems[groupLetter].map((word) => (
                     <WordCard key={word.id} word={word} />
                   ))}
                 </Stack>
@@ -203,6 +221,7 @@ export default function WordsPage() {
                     '/words',
                     `?${new URLSearchParams({
                       ...(q ? { q } : {}),
+                      ...(letter ? { letter } : {}),
                       ...(wordType ? { word_type: wordType } : {}),
                       cursor: meta.next_cursor,
                     }).toString()}`,
@@ -221,9 +240,11 @@ export default function WordsPage() {
               <AlertCircle size={24} />
             </ThemeIcon>
             <Title order={4} ta="center">
-              {q ? t('word_listEmptyQuery', { q }) : t('word_listEmptyNone')}
+              {activeFilter
+                ? t('word_listEmptyQuery', { q: activeFilter })
+                : t('word_listEmptyNone')}
             </Title>
-            {q && (
+            {activeFilter && (
               <>
                 <Text size="sm" c="dimmed" ta="center">
                   {t('word_listEmptyHint')}

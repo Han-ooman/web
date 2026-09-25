@@ -83,3 +83,16 @@ body {
 :root[data-mantine-color-scheme='dark'] {
   --mantine-color-dimmed: var(--mantine-color-dark-1);
 }
+
+/* QR: light = black on white; dark = inverted for theme fit (still scannable). */
+.whatsapp-group-qr-frame {
+  background: #fff;
+}
+
+:root[data-mantine-color-scheme='dark'] .whatsapp-group-qr-frame {
+  background: #2e2e2e;
+}
+
+:root[data-mantine-color-scheme='dark'] .whatsapp-group-qr-frame img {
+  filter: invert(1);
+}

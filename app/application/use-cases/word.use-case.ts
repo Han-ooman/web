@@ -12,6 +12,8 @@ export interface SearchWordsParams {
 
 export interface ListWordsParams {
   q?: string;
+  /** Satu huruf A–Z: prefix lemma (panel beranda). Beda dari q = contains. */
+  letter?: string;
   limit?: number;
   cursor?: string;
   wordType?: string;
@@ -38,6 +40,7 @@ export async function listWordsAtoZ(
 ): Promise<UnwrappedResult<WordSummary[]>> {
   const query = new URLSearchParams();
   if (params.q) query.set('q', params.q);
+  if (params.letter) query.set('letter', params.letter);
   if (params.limit) query.set('limit', String(params.limit));
   if (params.cursor) query.set('cursor', params.cursor);
   if (params.wordType) query.set('word_type', params.wordType);
