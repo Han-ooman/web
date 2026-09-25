@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 import { data, Outlet, useLoaderData } from 'react-router';
 import { AppShell } from '@mantine/core';
 import { I18nextProvider } from 'react-i18next';
@@ -27,21 +27,22 @@ export async function loader({ params }: Route.LoaderArgs) {
   );
 }
 
+function subscribeNoop() {
+  return () => {};
+}
+
+/** false saat SSR/hidrasi, true setelahnya — tanpa setState di effect. */
+function useIsClient() {
+  return useSyncExternalStore(subscribeNoop, () => true, () => false);
+}
+
 export default function LocaleLayout() {
   const { locale } = useLoaderData<typeof loader>();
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  const isClient = useIsClient();
 
   const i18n = useMemo(() => {
     if (isClient) return getClientI18n(locale);
     return createI18nInstance(locale);
-  }, [locale, isClient]);
-
-  useEffect(() => {
-    if (isClient) getClientI18n(locale);
   }, [locale, isClient]);
 
   return (

@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, useSyncExternalStore, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import {
   Button,
@@ -38,18 +38,24 @@ function extractToken(raw: string): string {
   return trimmed;
 }
 
+function subscribeHash(onStoreChange: () => void) {
+  window.addEventListener('hashchange', onStoreChange);
+  return () => window.removeEventListener('hashchange', onStoreChange);
+}
+
+function readHashToken() {
+  return new URLSearchParams(window.location.hash.replace(/^#/, '')).get('token') ?? '';
+}
+
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   // Link email baru memakai fragment #token=... yang tidak pernah dikirim ke
   // server (bebas dari log akses/bookmark server-side). Fallback ?token=
-  // untuk link email lama. Pentest W-07.
+  // untuk link email lama. Pentest W-07. Snapshot server kosong supaya
+  // hidrasi cocok; nilai hash baru dibaca di client.
   const tokenFromQuery = searchParams.get('token') ?? '';
-  const [hashToken, setHashToken] = useState('');
-  useEffect(() => {
-    const fromHash = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('token');
-    if (fromHash) setHashToken(fromHash);
-  }, []);
+  const hashToken = useSyncExternalStore(subscribeHash, readHashToken, () => '');
   const tokenFromLink = hashToken || tokenFromQuery;
   const [email, setEmail] = useState(searchParams.get('email') ?? '');
   const [code, setCode] = useState('');

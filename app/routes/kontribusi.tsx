@@ -93,6 +93,56 @@ const emptyMakna: MaknaForm = { wordClassId: '', definition: '', padanan: '', co
 // alias + fallback nama label agar auto-fill tetap jalan.
 const KBBI_CODE_ALIASES: Record<string, string> = { a: 'adj', p: 'part' };
 
+const EMPTY_KBBI: KbbiSuggestion[] = [];
+const EMPTY_WORDS: WordSummary[] = [];
+
+function searchSimilarLemmas(q: string): Promise<WordSummary[]> {
+  return searchWords({ q, searchIn: 'lemma', limit: 5 }).then((res) => res.data);
+}
+
+/**
+ * Debounce pencarian. Hasil pendek / belum siap dihitung saat render,
+ * setState hanya di callback timeout — bukan sinkron di badan effect.
+ */
+function useDebouncedQuery<T>(
+  rawQuery: string,
+  minLength: number,
+  delayMs: number,
+  lookup: (q: string) => Promise<T>,
+  empty: T,
+  hiddenQuery: string | null = null,
+): { data: T; loading: boolean; error: boolean } {
+  const [settled, setSettled] = useState<{ q: string; data: T; error: boolean } | null>(null);
+  const q = rawQuery.trim();
+  const active = q.length >= minLength && hiddenQuery !== q;
+
+  useEffect(() => {
+    if (!active) return;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      lookup(q).then(
+        (data) => {
+          if (!cancelled) setSettled({ q, data, error: false });
+        },
+        () => {
+          if (!cancelled) setSettled({ q, data: empty, error: true });
+        },
+      );
+    }, delayMs);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [active, q, delayMs, empty, lookup]);
+
+  if (!active) return { data: empty, loading: false, error: false };
+  if (settled?.q !== q) {
+    const stale = settled && !settled.error && settled.q !== hiddenQuery ? settled.data : empty;
+    return { data: stale, loading: true, error: false };
+  }
+  return { data: settled.error ? empty : settled.data, loading: false, error: settled.error };
+}
+
 function matchWordClass(
   s: KbbiSuggestion,
   wordClasses: { id: string; code: string; name: string }[],
@@ -122,39 +172,6 @@ function KbbiLookupModal({
   onSelect: (s: KbbiSuggestion) => void;
   initialQuery?: string;
 }) {
-  const [query, setQuery] = useState(initialQuery);
-  const [results, setResults] = useState<KbbiSuggestion[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
-
-  // useState(initialQuery) cuma jalan sekali - sync ulang tiap modal dibuka
-  useEffect(() => {
-    if (opened) setQuery(initialQuery);
-  }, [opened, initialQuery]);
-
-  useEffect(() => {
-    if (!opened) return;
-    const q = query.trim();
-    if (q.length < 2) {
-      setResults([]);
-      setError(false);
-      return;
-    }
-    setLoading(true);
-    setError(false);
-    const timer = setTimeout(async () => {
-      try {
-        setResults(await lookupKbbi(q));
-      } catch {
-        setError(true);
-        setResults([]);
-      } finally {
-        setLoading(false);
-      }
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [query, opened]);
-
   return (
     <Modal
       opened={opened}
@@ -163,6 +180,37 @@ function KbbiLookupModal({
       size="lg"
       centered
     >
+      {opened ? (
+        <KbbiLookupFields
+          initialQuery={initialQuery}
+          onClose={onClose}
+          onSelect={onSelect}
+        />
+      ) : null}
+    </Modal>
+  );
+}
+
+function KbbiLookupFields({
+  initialQuery,
+  onClose,
+  onSelect,
+}: {
+  initialQuery: string;
+  onClose: () => void;
+  onSelect: (s: KbbiSuggestion) => void;
+}) {
+  // Mount ulang tiap modal dibuka, jadi query awal selalu segar.
+  const [query, setQuery] = useState(initialQuery);
+  const { data: results, loading, error } = useDebouncedQuery(
+    query,
+    2,
+    400,
+    lookupKbbi,
+    EMPTY_KBBI,
+  );
+
+  return (
       <Stack gap="sm">
         <TextInput
           data-autofocus
@@ -221,7 +269,6 @@ function KbbiLookupModal({
 
         <Box />
       </Stack>
-    </Modal>
   );
 }
 
@@ -243,30 +290,17 @@ function MaknaCard({
   onRemove: () => void;
   canRemove: boolean;
 }) {
-  const [kbbi, setKbbi] = useState<KbbiSuggestion[]>([]);
-  const [kbbiLoading, setKbbiLoading] = useState(false);
   const [kbbiOpen, setKbbiOpen] = useState(false);
-
-  // Trigger KBBI: user isi padanan Indonesia → cari definisi KBBI-nya
-  // untuk prefill. Best-effort; gagal = diam (tidak mengganggu form).
-  useEffect(() => {
-    const q = value.padanan.trim();
-    if (q.length < 2) {
-      setKbbi([]);
-      return;
-    }
-    setKbbiLoading(true);
-    const timer = setTimeout(async () => {
-      try {
-        setKbbi(await lookupKbbi(q));
-      } catch {
-        setKbbi([]);
-      } finally {
-        setKbbiLoading(false);
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [value.padanan]);
+  // Setelah user memilih saran, sembunyikan daftar untuk query yang sama.
+  const [dismissedQ, setDismissedQ] = useState<string | null>(null);
+  const { data: kbbi, loading: kbbiLoading } = useDebouncedQuery(
+    value.padanan,
+    2,
+    500,
+    lookupKbbi,
+    EMPTY_KBBI,
+    dismissedQ,
+  );
 
   function applySuggestion(s: KbbiSuggestion) {
     const wc = matchWordClass(s, wordClasses);
@@ -275,7 +309,7 @@ function MaknaCard({
       wordClassId: wc?.id ?? value.wordClassId,
       definition: s.definition,
     });
-    setKbbi([]);
+    setDismissedQ(value.padanan.trim());
   }
 
   return (
@@ -470,23 +504,13 @@ export default function KontribusiPage() {
   // ==== Cek duplikat live (debounce 400ms) ====
   // Lemma yang sudah tayang → tawarkan lihat halamannya / ajukan makna
   // baru (verifikator menggabungkan, bukan menolak).
-  const [similar, setSimilar] = useState<WordSummary[]>([]);
-  useEffect(() => {
-    const q = lemma.trim();
-    if (q.length < 2) {
-      setSimilar([]);
-      return;
-    }
-    const timer = setTimeout(async () => {
-      try {
-        const res = await searchWords({ q, searchIn: 'lemma', limit: 5 });
-        setSimilar(res.data);
-      } catch {
-        setSimilar([]);
-      }
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [lemma]);
+  const { data: similar } = useDebouncedQuery(
+    lemma,
+    2,
+    400,
+    searchSimilarLemmas,
+    EMPTY_WORDS,
+  );
 
   const exact = similar.find(
     (w) => w.lemma.trim().toLowerCase() === lemma.trim().toLowerCase(),
