@@ -27,6 +27,7 @@ import {
   localePath,
 } from '@/application/i18n/locales';
 import { getFixedT } from '@/application/i18n/i18n-instance';
+import { AppError } from './infrastructure/api/api-client';
 import './presentation/styles/app.css';
 
 const theme = createTheme({
@@ -92,7 +93,9 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
       message = t('errors_errorStatus', { status: error.status });
       details = error.statusText || details;
     }
-  } else if (error instanceof Error) {
+  } else if (error instanceof AppError) {
+    // Hanya pesan error aplikasi (milik kita, user-facing) yang boleh
+    // dirender - error lain bisa membocorkan detail internal (pentest W-06).
     details = error.message;
   }
 

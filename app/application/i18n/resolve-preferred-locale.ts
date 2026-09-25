@@ -45,6 +45,8 @@ export function resolvePreferredLocale(request: Request): AppLocale {
 }
 
 export function localeCookieHeader(locale: AppLocale): string {
-  // 1 tahun; SameSite=Lax; path=/
-  return `${LOCALE_COOKIE}=${encodeURIComponent(locale)}; Path=/; Max-Age=31536000; SameSite=Lax`;
+  // 1 tahun; SameSite=Lax. HttpOnly+Secure: nilai cookie ini tidak pernah
+  // dibaca JavaScript (resolve dilakukan server-side), jadi tidak ada alasan
+  // mengeksposnya (pentest B-09).
+  return `${LOCALE_COOKIE}=${encodeURIComponent(locale)}; Path=/; Max-Age=31536000; SameSite=Lax; Secure; HttpOnly`;
 }

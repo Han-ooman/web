@@ -12,12 +12,12 @@ import {
   Title,
 } from '@mantine/core';
 import type { Route } from './+types/hapus-akun';
-import { AppError } from '@/infrastructure/api/api-client';
 import {
   confirmAccountDeletion,
   requestAccountDeletion,
 } from '@/application/use-cases/auth.use-case';
 import { buildMetaTags } from '@/application/utils/seo';
+import { formError } from '@/application/utils/form-error';
 import {
   DEFAULT_LOCALE,
   isAppLocale,
@@ -62,10 +62,10 @@ export default function HapusAkunPage() {
     setSubmitting(true);
     setError(null);
     try {
-      await requestAccountDeletion(email.trim());
+      await requestAccountDeletion(email.trim().toLowerCase());
       setCodeSent(true);
     } catch (err) {
-      setError(err instanceof AppError ? err.message : 'Gagal mengirim kode. Coba lagi.');
+      setError(formError(err, 'Gagal mengirim kode. Coba lagi.'));
     } finally {
       setSubmitting(false);
     }
@@ -78,13 +78,13 @@ export default function HapusAkunPage() {
     setError(null);
     try {
       await confirmAccountDeletion({
-        email: email.trim(),
+        email: email.trim().toLowerCase(),
         code: codeNormalized,
         confirmation,
       });
       setDone(true);
     } catch (err) {
-      setError(err instanceof AppError ? err.message : 'Gagal menghapus akun. Coba lagi.');
+      setError(formError(err, 'Gagal menghapus akun. Coba lagi.'));
     } finally {
       setSubmitting(false);
     }
@@ -143,6 +143,9 @@ export default function HapusAkunPage() {
                   <TextInput
                     label="Email akun"
                     type="email"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                     value={email}
                     onChange={(event) => setEmail(event.currentTarget.value)}
                     disabled={submitting || codeSent}

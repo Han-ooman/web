@@ -1,6 +1,7 @@
 import type { ApiErrorDetail, ApiResponse, CursorMeta } from '@/domain/entities/api.entity';
 import { decideFailoverStep, isAbortError, sameHost } from './failover-step';
 import {
+  acquireApiSlot,
   acquireColdSlot,
   activeTier,
   advanceTier,
@@ -9,6 +10,7 @@ import {
   isColdTier,
   isInfraStatus,
   isReplayableMethod,
+  releaseApiSlot,
   releaseColdSlot,
 } from './failover';
 
@@ -152,7 +154,9 @@ async function attempt<T>(
       throw new InfraFailure(new AppError('REQUEST_TIMEOUT', 'Permintaan timeout ke server', 408));
     }
     throw new InfraFailure(
-      new AppError('NETWORK_ERROR', (error as Error).message ?? 'Gagal menghubungi server', 500),
+      // Pesan generik: error.message fetch mentah bisa memuat host tier
+      // internal dan bocor ke halaman publik lewat ErrorBoundary (pentest W-06).
+      new AppError('NETWORK_ERROR', 'Gagal menghubungi server', 500),
     );
   } finally {
     bound.cleanup();
@@ -185,8 +189,13 @@ export async function apiClient<T>(
   for (;;) {
     const tier = pinnedBase ? { index: 0, baseUrl: baseUrl!, timeoutMs: timeoutMs ?? 10_000 } : activeTier();
     let gated = false;
+    let apiGated = false;
     let attemptedBaseUrl = tier.baseUrl;
     try {
+      // Gate in-flight untuk SEMUA tier (pentest B-04), lalu gate tambahan
+      // untuk tier cold. Urutan release kebalikan urutan acquire.
+      await acquireApiSlot(signal ?? undefined);
+      apiGated = true;
       if (!pinnedBase && isColdTier(tier)) {
         await acquireColdSlot(signal ?? undefined);
         gated = true;
@@ -217,6 +226,7 @@ export async function apiClient<T>(
       replayed = true;
     } finally {
       if (gated) releaseColdSlot();
+      if (apiGated) releaseApiSlot();
     }
   }
 

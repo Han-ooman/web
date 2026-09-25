@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import {
   Button,
@@ -11,9 +11,9 @@ import {
   Title,
 } from '@mantine/core';
 import { KeyRound, ArrowRight } from 'lucide-react';
-import { AppError } from '../infrastructure/api/api-client';
 import { resetPassword } from '../application/use-cases/auth.use-case';
 import { buildMetaTags } from '../application/utils/seo';
+import { formError } from '../application/utils/form-error';
 
 export function meta() {
   return buildMetaTags({
@@ -41,7 +41,16 @@ function extractToken(raw: string): string {
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const tokenFromLink = searchParams.get('token') ?? '';
+  // Link email baru memakai fragment #token=... yang tidak pernah dikirim ke
+  // server (bebas dari log akses/bookmark server-side). Fallback ?token=
+  // untuk link email lama. Pentest W-07.
+  const tokenFromQuery = searchParams.get('token') ?? '';
+  const [hashToken, setHashToken] = useState('');
+  useEffect(() => {
+    const fromHash = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('token');
+    if (fromHash) setHashToken(fromHash);
+  }, []);
+  const tokenFromLink = hashToken || tokenFromQuery;
   const [email, setEmail] = useState(searchParams.get('email') ?? '');
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -75,7 +84,7 @@ export default function ResetPasswordPage() {
       );
       setDone(true);
     } catch (err) {
-      setError(err instanceof AppError ? err.message : 'Gagal mereset password. Coba lagi.');
+      setError(formError(err, 'Gagal mereset password. Coba lagi.'));
     } finally {
       setSubmitting(false);
     }

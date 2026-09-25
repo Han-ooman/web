@@ -3,6 +3,9 @@ import type { WordAudio } from '@/domain/entities/word.entity';
 
 /** Pemutar satu take `word_audios` - URL file, bukan teks notasi IPA. */
 export function WordAudioPlayer({ audio }: { audio: WordAudio }) {
+  // Validasi skema di trust boundary (pentest W-10): URL audio berasal dari
+  // data API/kontribusi - hanya https: yang boleh jadi src/href.
+  if (!audio.url.startsWith('https:')) return null;
   const speaker = audio.speaker_name?.trim();
   return (
     <Group gap={8} wrap="nowrap" align="center">
