@@ -12,6 +12,8 @@ export interface TranslationHelpReply {
   status: TranslationHelpReplyStatus;
   is_verifier: boolean;
   is_pinned: boolean;
+  upvotes: number;
+  downvotes: number;
   created_at: string;
 }
 
@@ -23,6 +25,7 @@ export interface TranslationHelpPublicItem {
   images: TranslationHelpPublicImage[];
   status: 'published';
   pinned_reply_id: string | null;
+  upvotes: number;
   created_at: string;
 }
 

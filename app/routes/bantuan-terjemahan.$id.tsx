@@ -45,7 +45,7 @@ export function meta({ data, params }: Route.MetaArgs) {
     data.help.body?.trim().slice(0, 140) ||
     'Pertanyaan terjemahan bahasa Sambas.';
   const rawImage = data.help.images[0]?.public_url;
-  const ogImage = displayImageUrl(rawImage, { width: 1200 }) ?? rawImage;
+  const ogImage = displayImageUrl(rawImage, { width: 1200 });
 
   return buildMetaTags({
     title: 'Tanya Terjemahan',
@@ -84,8 +84,11 @@ function replyBodyLabel(reply: TranslationHelpReply): string {
 
 function sortReplies(replies: TranslationHelpReply[]): TranslationHelpReply[] {
   return [...replies].sort((a, b) => {
-    if (a.is_pinned === b.is_pinned) return 0;
-    return a.is_pinned ? -1 : 1;
+    if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
+    const netA = (a.upvotes ?? 0) - (a.downvotes ?? 0);
+    const netB = (b.upvotes ?? 0) - (b.downvotes ?? 0);
+    if (netA !== netB) return netB - netA;
+    return b.created_at.localeCompare(a.created_at);
   });
 }
 
@@ -132,6 +135,7 @@ export default function BantuanTerjemahanDetailPage() {
 
           <Text size="sm" c="dimmed">
             {author} · {formatDateId(help.created_at)}
+            {(help.upvotes ?? 0) > 0 ? ` · ↑ ${help.upvotes}` : ''}
           </Text>
 
           {help.body?.trim() ? (
@@ -157,6 +161,10 @@ export default function BantuanTerjemahanDetailPage() {
               })}
             </SimpleGrid>
           ) : null}
+
+          <Text size="sm" c="dimmed">
+            ↑ {help.upvotes ?? 0} · Saya juga ingin tahu
+          </Text>
         </Stack>
 
         <Stack gap="sm">
@@ -204,6 +212,12 @@ export default function BantuanTerjemahanDetailPage() {
                     >
                       {replyBodyLabel(reply)}
                     </Text>
+                    {reply.status === 'published' ? (
+                      <Text size="xs" c="dimmed">
+                        ↑ {reply.upvotes ?? 0} · ↓ {reply.downvotes ?? 0} · Jawaban
+                        membantu?
+                      </Text>
+                    ) : null}
                   </Stack>
                 </Card>
               ))}
@@ -213,10 +227,10 @@ export default function BantuanTerjemahanDetailPage() {
 
         <Card withBorder padding="lg" radius="md">
           <Stack gap="sm">
-            <Text fw={600}>Balas di aplikasi</Text>
+            <Text fw={600}>Balas & vote di aplikasi</Text>
             <Text size="sm" c="dimmed">
-              Menulis balasan hanya tersedia di aplikasi SambasKu. Unduh di Google
-              Play untuk ikut membantu.
+              Menulis balasan dan memberi vote hanya tersedia di aplikasi
+              SambasKu. Unduh di Google Play untuk ikut membantu.
             </Text>
             <Group gap="md" wrap="wrap">
               <Button

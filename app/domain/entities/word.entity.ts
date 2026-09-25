@@ -76,6 +76,8 @@ export interface WordImage {
   provider_file_id: string;
   alt_text: string | null;
   is_primary: boolean;
+  content_warnings?: string[];
+  is_verified?: boolean;
 }
 
 export interface RelatedWord {

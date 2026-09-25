@@ -82,3 +82,40 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --config dist/server/wrangler.json --name sambasku-web-prod
+
+      # Pentest W-01/B-01: CSP yang ter-deploy WAJIB memuat semua host fallback -
+      # drift ini pernah mematikan failover circuit breaker di browser.
+      # B-01: produksi pernah menjalankan build != main (tanpa x-cache, dengan
+      # x-cached-at) - assertion ini gagal bila redeploy ternyata tidak live.
+      # Assertion gagal = deploy dianggap gagal.
+      - name: Verifikasi header live pasca-deploy
+        run: |
+          sleep 20  # beri waktu propagasi deploy
+          CSP="$(curl -fsSI https://sambasku.com/ | tr -d '\r\n' | grep -i 'content-security-policy:')"
+          echo "$CSP"
+          if [ -z "$CSP" ]; then echo "::error::Header CSP tidak ditemukan"; exit 1; fi
+          for host in https://deno.sambasku.com https://render.sambasku.com; do
+            if ! echo "$CSP" | grep -q "$host"; then
+              echo "::error::CSP tidak memuat host fallback $host"
+              exit 1
+            fi
+          done
+          if echo "$CSP" | grep -q 'unsafe-eval'; then
+            echo "::error::CSP produksi masih memuat unsafe-eval"; exit 1
+          fi
+          if echo "$CSP" | grep -q 'sambasku-staging'; then
+            echo "::error::CSP produksi memuat host staging"; exit 1
+          fi
+          # Forensik deploy (B-01): worker baru selalu menset x-cache + no-cache
+          # dan tidak pernah mengirim x-cached-at.
+          LIVE_ID_HEADERS="$(curl -fsSI https://sambasku.com/id | tr -d '\r')"
+          echo "$LIVE_ID_HEADERS"
+          if ! echo "$LIVE_ID_HEADERS" | grep -qi '^x-cache:'; then
+            echo "::error::Header x-cache tidak ada di /id - build yang dideploy bukan worker terbaru (B-01)"; exit 1
+          fi
+          if ! echo "$LIVE_ID_HEADERS" | grep -qi '^cache-control: no-cache'; then
+            echo "::error::Cache-Control bukan no-cache di /id - build yang dideploy bukan worker terbaru (B-01)"; exit 1
+          fi
+          if echo "$LIVE_ID_HEADERS" | grep -qi '^x-cached-at:'; then
+            echo "::error::x-cached-at bocor ke klien (W-08)"; exit 1
+          fi

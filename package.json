@@ -13,7 +13,7 @@
     "build:staging": "react-router build --mode staging",
     "preview": "react-router dev",
     "typecheck": "react-router typegen && tsc -b",
-    "test": "node --experimental-strip-types --test app/infrastructure/api/__tests__/*.test.ts",
+    "test": "node --experimental-strip-types --test \"app/**/*.test.ts\"",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"app/**/*.{ts,tsx}\""
@@ -21,21 +21,21 @@
   "dependencies": {
     "@mantine/core": "^9.6.2",
     "@mantine/hooks": "^9.6.2",
-    "@react-router/cloudflare": "^7.5.0",
+    "@react-router/cloudflare": "^7.18.0",
     "i18next": "^26.4.2",
     "isbot": "^5.1.23",
     "lucide-react": "^1.16.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-i18next": "^17.0.15",
-    "react-router": "^7.5.0",
+    "react-router": "^7.18.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.1.1",
     "@cloudflare/workers-types": "^4.20250224.0",
     "@eslint/js": "^9.22.0",
-    "@react-router/dev": "^7.5.0",
+    "@react-router/dev": "^7.18.0",
     "@types/node": "^22.13.9",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
