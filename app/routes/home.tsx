@@ -8,6 +8,7 @@ import {
   Container,
   Group,
   Image,
+  Paper,
   Stack,
   Text,
   Title,
@@ -50,6 +51,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 const ALPHABETS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const PLAY_STORE_URL =
   'https://play.google.com/store/apps/details?id=com.iamutaki.sambasku';
+const WHATSAPP_GROUP_URL =
+  'https://chat.whatsapp.com/Kw64lxFEGXfK5gw6T6GEoN?mode=gi_t';
 
 export default function Home() {
   const { wordOfDay } = useLoaderData<typeof loader>();
@@ -185,6 +188,62 @@ export default function Home() {
                 {t('home_askFeedLink')}
               </Anchor>
             </Stack>
+          </Group>
+        </Card>
+
+        <Card withBorder padding="lg" radius="md">
+          <Group justify="space-between" align="center" gap="lg" wrap="wrap">
+            <Stack gap={8} maw={520}>
+              <Stack gap={4}>
+                <Group gap={8}>
+                  <Image
+                    src="/whatsapp.svg"
+                    alt=""
+                    h={18}
+                    w={18}
+                    fit="contain"
+                    decoding="async"
+                    aria-hidden
+                  />
+                  <Title order={3} size="h4">
+                    {t('home_waTitle')}
+                  </Title>
+                </Group>
+                <Text size="sm" c="dimmed">
+                  {t('home_waBody')}
+                </Text>
+              </Stack>
+              <Button
+                component="a"
+                href={WHATSAPP_GROUP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="light"
+                color="green"
+                w="fit-content"
+              >
+                {t('home_waButton')}
+              </Button>
+            </Stack>
+
+            <Anchor
+              href={WHATSAPP_GROUP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              underline="never"
+              aria-label={t('home_waButton')}
+            >
+              <Paper withBorder p={6} bg="#fff" radius="sm">
+                <Image
+                  src="/whatsapp-group-qr.svg"
+                  alt={t('home_waQrAlt')}
+                  h={120}
+                  w={120}
+                  fit="contain"
+                  decoding="async"
+                />
+              </Paper>
+            </Anchor>
           </Group>
         </Card>
       </Stack>
