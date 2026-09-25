@@ -10,6 +10,17 @@ const DEFAULT_APP_NAME = 'Kamus Digital Sambas-Indonesia';
 
 const mode = (typeof import.meta !== 'undefined' && import.meta.env?.MODE) || 'development';
 
+// Pentest W-12: tanpa guard ini, build produksi yang lupa VITE_API_BASE_URL
+// membuat SSR diam-diam memakai API staging. Gagal keras di awal lebih baik
+// daripada data lintas environment senyap.
+if (
+  mode === 'production' &&
+  typeof window === 'undefined' &&
+  !(typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL)
+) {
+  throw new Error('VITE_API_BASE_URL wajib di-set untuk SSR produksi');
+}
+
 /**
  * Tier cadangan API, urut, dari `VITE_API_BASE_URL_FALLBACKS` (dipisah koma).
  * Kosong = circuit breaker tidak punya tujuan pindah dan diam.

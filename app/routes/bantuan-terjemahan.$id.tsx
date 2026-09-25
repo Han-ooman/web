@@ -45,7 +45,7 @@ export function meta({ data, params }: Route.MetaArgs) {
     data.help.body?.trim().slice(0, 140) ||
     'Pertanyaan terjemahan bahasa Sambas.';
   const rawImage = data.help.images[0]?.public_url;
-  const ogImage = displayImageUrl(rawImage, { width: 1200 }) ?? rawImage;
+  const ogImage = displayImageUrl(rawImage, { width: 1200 });
 
   return buildMetaTags({
     title: 'Tanya Terjemahan',

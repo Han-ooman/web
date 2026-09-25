@@ -44,7 +44,9 @@ export function WordImageView({
   alt: string;
 }) {
   const { t } = useTranslation();
-  const src = displayImageUrl(image.url, { width: 800 }) ?? image.url;
+  // Tanpa fallback ke URL mentah: displayImageUrl menolak skema non-https
+  // (pentest W-10) dan fallback akan membatalkan validasi itu.
+  const src = displayImageUrl(image.url, { width: 800 });
 
   if (isPendingImage(image)) {
     return (

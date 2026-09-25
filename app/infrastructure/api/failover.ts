@@ -15,8 +15,12 @@ import { ColdHostGate, type AbortLike } from './cold-host-gate';
 
 const PIN_MS = 5 * 60 * 1000;
 
-/** Timeout normal - sama dengan nilai apiClient sebelum failover ada. */
-const DEFAULT_TIMEOUT_MS = 10_000;
+/**
+ * Timeout normal. 6 detik (pentest W-04): anggaran total SSR terburuk
+ * 6+6+8 = 20 detik - pengguna tidak menunggu lebih lama dari itu, lebih
+ * baik degradasi anggun lebih cepat.
+ */
+const DEFAULT_TIMEOUT_MS = 6_000;
 
 /**
  * Probe `/health` hanya untuk memulai boot. Tidak perlu menunggu instance siap
@@ -30,10 +34,10 @@ const HEALTH_PROBE_MS = 8_000;
  *
  * Di browser boleh menunggu penuh (ada spinner). Di SSR TIDAK: 75 detik di dalam
  * loader berarti halaman kosong dan Worker membakar wall-clock, jadi dibatasi
- * 20 detik lalu biarkan degradasi anggun yang sudah ada (search/words
+ * 8 detik lalu biarkan degradasi anggun yang sudah ada (search/words
  * mengembalikan hasil kosong saat error) mengambil alih.
  */
-const COLD_START_TIMEOUT_MS = typeof window === 'undefined' ? 20_000 : 75_000;
+const COLD_START_TIMEOUT_MS = typeof window === 'undefined' ? 8_000 : 75_000;
 
 const isServer = () => typeof window === 'undefined';
 
@@ -55,6 +59,15 @@ function buildTiers(): readonly ApiTier[] {
 
 const tiers = buildTiers();
 const coldGate = new ColdHostGate();
+
+/**
+ * Semaphore in-flight untuk SEMUA tier, bukan hanya cold (pentest B-04):
+ * banjir request ke tier-1 pun harus tergateli per-isolate supaya tidak
+ * berantai ke API. ponytail: 8 slot per isolate - angka perkiraan; kalau
+ * traffic sah terlihat antri dalam kondisi normal, ukur dan naikkan.
+ */
+const API_MAX_IN_FLIGHT = 8;
+const apiGate = new ColdHostGate(API_MAX_IN_FLIGHT);
 
 let pinnedIndex = 0;
 let pinnedUntil = 0;
@@ -78,6 +91,14 @@ export function acquireColdSlot(signal?: AbortLike): Promise<void> {
 
 export function releaseColdSlot(): void {
   coldGate.release();
+}
+
+export function acquireApiSlot(signal?: AbortLike): Promise<void> {
+  return apiGate.acquire(signal);
+}
+
+export function releaseApiSlot(): void {
+  apiGate.release();
 }
 
 /** Murni - tidak memutasi apa pun. Pin kedaluwarsa cukup berhenti dihitung. */
@@ -176,6 +197,7 @@ export function __resetFailoverForTests(): void {
   warmedUpForPin = 0;
   cancelProbe();
   coldGate.reset();
+  apiGate.reset();
 }
 
 export { isServer, tiers as apiTiers };

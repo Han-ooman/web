@@ -66,7 +66,7 @@ export function meta({ data, params }: Route.MetaArgs) {
   const { title, description } = buildWordSeoCopy(word, locale);
   const rawImage = pickSafePrimaryImageUrl(word.images);
   const primaryImage = rawImage
-    ? (displayImageUrl(rawImage, { width: 1200 }) ?? rawImage)
+    ? displayImageUrl(rawImage, { width: 1200 })
     : undefined;
 
   return buildMetaTags({
