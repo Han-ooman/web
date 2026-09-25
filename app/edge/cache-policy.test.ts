@@ -7,6 +7,7 @@ import {
   canonicalCachePath,
   freshSeconds,
   isCacheableRequest,
+  isOgImagePath,
   isSitemapPath,
 } from './cache-policy.ts';
 
@@ -173,5 +174,33 @@ describe('isSitemapPath', () => {
     assert.equal(isCacheableRequest('GET', '/sitemap-static.xml'), true);
     assert.equal(isCacheableRequest('GET', '/sitemap-words/k'), true);
     assert.equal(isCacheableRequest('GET', '/sitemap-words/kk'), false);
+  });
+});
+
+describe('rss', () => {
+  it('cacheable dengan jendela segar satu jam (bukan 60 detik)', () => {
+    assert.equal(isCacheableRequest('GET', '/rss.xml'), true);
+    assert.ok(freshSeconds('/rss.xml') > freshSeconds('/id/words/capal'));
+    assert.ok(freshSeconds('/rss.xml') < freshSeconds(SITEMAP_PATH));
+    // Varian dengan query atau trailing slash ekstra tidak lewat.
+    assert.equal(isCacheableRequest('GET', '/rss.xml', '?x=1'), false);
+  });
+});
+
+describe('og image', () => {
+  it('path /og/words/{lemma} cacheable dengan jendela segar sehari', () => {
+    assert.equal(isOgImagePath('/og/words/capal'), true);
+    assert.equal(isOgImagePath('/og/words/a%20b'), true);
+    assert.equal(isCacheableRequest('GET', '/og/words/capal'), true);
+    assert.equal(freshSeconds('/og/words/capal'), 86400);
+    // Varian lier (multi segmen, query, terlalu panjang) tidak di-cache.
+    assert.equal(isCacheableRequest('GET', '/og/words/a/b'), false);
+    assert.equal(isCacheableRequest('GET', '/og/words/x', '?v=2'), false);
+  });
+
+  it('404 kartu OG ikut negative cache pendek', () => {
+    assert.ok(cacheTtlSeconds('/og/words/tidak-ada', 404) > 0);
+    assert.equal(cacheTtlSeconds('/og/words/capal', 200) > 0, true);
+    assert.equal(cacheTtlSeconds('/og/words/a/b', 404), 0);
   });
 });

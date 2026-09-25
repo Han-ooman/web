@@ -65,9 +65,11 @@ export function meta({ data, params }: Route.MetaArgs) {
   const { word } = data;
   const { title, description } = buildWordSeoCopy(word, locale);
   const rawImage = pickSafePrimaryImageUrl(word.images);
+  // Kartu OG dinamis saat tidak ada gambar kata yang aman (pengganti
+  // fallback logo.png dari buildMetaTags).
   const primaryImage = rawImage
     ? displayImageUrl(rawImage, { width: 1200 })
-    : undefined;
+    : `${env.appUrl}/og/words/${encodeURIComponent(word.lemma)}`;
 
   return buildMetaTags({
     title,

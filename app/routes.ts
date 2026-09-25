@@ -10,7 +10,11 @@ export default [
   route('sitemap.xml', 'routes/sitemap[.]xml.ts'),
   route('sitemap-static.xml', 'routes/sitemap-static[.]xml.ts'),
   route('sitemap-words/:letter', 'routes/sitemap-words.$letter.ts'),
+  // Kartu OG per kata: di luar pohon locale (segmen statis 'og' menang
+  // dari :locale dalam ranking route).
+  route('og/words/:lemma', 'routes/og.words[.]png.ts'),
   route('robots.txt', 'routes/robots[.]txt.ts'),
+  route('rss.xml', 'routes/rss[.]xml.ts'),
   route('reset-password', 'routes/reset-password.tsx'),
 
   // Legacy tanpa locale → 301/302 ke /{defaultLocale}/...

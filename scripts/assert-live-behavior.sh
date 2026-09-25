@@ -53,6 +53,21 @@ assert_xcache() {
 
 echo "== Verifikasi perilaku cache edge: $BASE (profil: $PROFILE) =="
 
+# Fail-fast: kalau host tidak bisa dijangkau (DNS mati, worker down), semua
+# x-cache akan kosong dan pesan assertion jadi menyesatkan ("cache mati"
+# padahal request tidak pernah sampai). Uji dulu sebelum assertion lain.
+# Staging sengaja di-skip (custom domain tidak dipelihara saat ini); prod
+# tetap wajib terjangkau.
+REACH_STATUS="$(get_status "/")"
+if [ "$REACH_STATUS" = "000" ]; then
+  if [ "$PROFILE" = "staging" ]; then
+    echo "::warning::$BASE tidak dapat dijangkau (DNS staging tidak dipelihara). Skip verifikasi staging."
+    exit 0
+  fi
+  echo "::error::$BASE tidak dapat dijangkau (DNS/worker down, curl exit non-zero). Periksa record DNS custom domain dan status deploy worker."
+  exit 1
+fi
+
 # Staging memang 404 di /sitemap.xml (route menolak saat !isProd) dan korpus
 # kata bisa berbeda dari produksi, jadi dua assertion itu khusus prod.
 check_sitemap() { [ "$PROFILE" = "prod" ]; }
@@ -122,6 +137,32 @@ if check_sitemap; then
   assert_xcache "/sitemap-words/a" "hit" "cache anak huruf tidak berfungsi"
   # Varian liar bukan sitemap dan tidak boleh menyentuh cache.
   assert_xcache "/sitemap-words/aa" "bypass" "path sitemap invalid tidak di-cache"
+
+  # RSS feed publik: 200, content-type benar, dan ter-cache di edge.
+  RSS_STATUS="$(get_status "/rss.xml")"
+  if [ "$RSS_STATUS" != "200" ]; then
+    fail "/rss.xml: status $RSS_STATUS, diharapkan 200"
+  else
+    echo "ok   /rss.xml -> 200"
+  fi
+  RSS_CT="$(get_headers "/rss.xml" | tr -d '\r' | awk 'tolower($1) == "content-type:" { print $2 }' | tail -1)"
+  if [ "$RSS_CT" = "application/rss+xml" ]; then
+    echo "ok   /rss.xml -> content-type rss"
+  else
+    fail "/rss.xml: content-type '$RSS_CT', diharapkan application/rss+xml"
+  fi
+  assert_xcache "/rss.xml" "miss" "request pertama mengisi feed"
+  assert_xcache "/rss.xml" "hit" "cache feed tidak berfungsi"
+
+  # Kartu OG per kata: 200 PNG + ter-cache (render resvg mahal).
+  OG_CT="$(get_headers "/og/words/$LEMMA" | tr -d '\r' | awk 'tolower($1) == "content-type:" { print $2 }' | tail -1)"
+  if [ "$OG_CT" = "image/png" ]; then
+    echo "ok   /og/words/$LEMMA -> content-type png"
+  else
+    fail "/og/words/$LEMMA: content-type '$OG_CT', diharapkan image/png"
+  fi
+  assert_xcache "/og/words/$LEMMA" "miss" "render pertama kartu OG"
+  assert_xcache "/og/words/$LEMMA" "hit" "cache kartu OG tidak berfungsi"
 else
   echo "skip /sitemap.xml (hanya aktif di profil prod)"
 fi

@@ -50,6 +50,27 @@ export async function listWordsAtoZ(
   });
 }
 
+/** Item feed GET /words/latest (urut waktu persetujuan). */
+export interface LatestWord {
+  id: string;
+  lemma: string;
+  word_type: 'word' | 'idiom' | 'peribahasa' | 'ungkapan';
+  approved_at: string;
+  sense: string | null;
+}
+
+export async function listLatestWords(
+  params: { limit?: number; cursor?: string; signal?: AbortSignal } = {},
+): Promise<UnwrappedResult<LatestWord[]>> {
+  const query = new URLSearchParams();
+  if (params.limit) query.set('limit', String(params.limit));
+  if (params.cursor) query.set('cursor', params.cursor);
+
+  return apiClient<LatestWord[]>(`/words/latest?${query.toString()}`, {
+    signal: params.signal,
+  });
+}
+
 export async function getWordOfDay(signal?: AbortSignal): Promise<WordOfTheDay> {
   try {
     const res = await apiClient<WordDetail & { date: string; is_new_this_week: boolean }>(

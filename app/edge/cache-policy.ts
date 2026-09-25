@@ -85,8 +85,26 @@ export function isSitemapPath(pathname: string): boolean {
   );
 }
 
+/// RSS dibangun dari satu subrequest API dan dibaca ulang pembaca feed tiap
+/// jam; jendela segar 1 jam seimbang antara beban API dan kesegaran feed.
+export const RSS_PATH = '/rss.xml';
+const RSS_FRESH_S = 3600;
+
+/// Kartu OG per kata: mahal dirender (resvg) dan isinya stabil per deploy,
+/// jadi jendela segar sehari penuh. Karakter segmen sama dengan guard route.
+const OG_WORDS_RE = /^\/og\/words\/[A-Za-z0-9%._~-]{1,100}$/;
+const OG_FRESH_S = 86400;
+
+export function isOgImagePath(pathname: string): boolean {
+  return OG_WORDS_RE.test(canonicalCachePath(pathname));
+}
+
 export function freshSeconds(pathname: string): number {
-  return isSitemapPath(pathname) ? SITEMAP_FRESH_S : FRESH_S;
+  if (isSitemapPath(pathname)) return SITEMAP_FRESH_S;
+  const canonical = canonicalCachePath(pathname);
+  if (canonical === RSS_PATH) return RSS_FRESH_S;
+  if (isOgImagePath(canonical)) return OG_FRESH_S;
+  return FRESH_S;
 }
 
 /// Halaman huruf `/{locale}/huruf/:letter`: satu huruf a-z persis. Regex ketat
@@ -123,6 +141,8 @@ export function isCacheableRequest(
   // Sitemap/robots tidak punya query yang bermakna.
   if (search !== '') return false;
   if (isSitemapPath(canonical)) return true;
+  if (canonical === RSS_PATH) return true;
+  if (isOgImagePath(canonical)) return true;
   if (locale === null) return false;
   return bare === '/' || bare.startsWith('/words/') || HURUF_PATH_RE.test(bare);
 }
@@ -137,6 +157,8 @@ export function cacheTtlSeconds(pathname: string, status: number): number {
   // path selalu berprefix locale, jadi `/` dan `/words/<lemma>` polos tidak
   // akan pernah sampai ke sini (lihat isCacheableRequest). Bulk request ke
   // path redirect itu hanya lookup cache yang dijamin kosong (pentest BH-08).
-  if (status === 404 && bare.startsWith('/words/')) return NEGATIVE_TTL_S;
+  if (status === 404 && (bare.startsWith('/words/') || isOgImagePath(bare))) {
+    return NEGATIVE_TTL_S;
+  }
   return 0;
 }

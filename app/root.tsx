@@ -50,6 +50,12 @@ export const links: Route.LinksFunction = () => [
     type: 'font/woff2',
     crossOrigin: 'anonymous',
   },
+  {
+    rel: 'alternate',
+    type: 'application/rss+xml',
+    title: 'SambasKu RSS',
+    href: '/rss.xml',
+  },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {

@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import { Anchor, Container, Divider, Group, Stack, Text } from '@mantine/core';
-import { Heart, ExternalLink } from 'lucide-react';
+import { Heart, ExternalLink, Rss } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Logo } from './logo';
 import { useLocalePath } from '@/application/i18n/use-locale';
@@ -61,6 +61,13 @@ export function Footer() {
             <Group gap={4} wrap="nowrap">
               <ExternalLink size={13} />
               {t('nav_github')}
+            </Group>
+          </Anchor>
+          {/* Feed publik tanpa prefix locale (data kamus identik antar locale). */}
+          <Anchor href="/rss.xml" size="xs" c="dimmed" py={4}>
+            <Group gap={4} wrap="nowrap">
+              <Rss size={13} />
+              {t('nav_rss')}
             </Group>
           </Anchor>
         </Group>

@@ -11,6 +11,7 @@ import {
   apiConnectOriginsFrom,
   buildSecurityHeaders,
 } from './edge/security-headers';
+import { isOgImagePath } from './edge/cache-policy';
 
 const requestHandler = createRequestHandler(
   () => import('virtual:react-router/server-build'),
@@ -46,6 +47,12 @@ async function render(request: Request): Promise<Response> {
   const headers = new Headers(response.headers);
   for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
     headers.set(key, value);
+  }
+  // Kartu OG difetch crawler/unfurler lintas origin; CORP same-origin
+  // menghalangi sebagian proxy unfurl. Crawler umumnya mengabaikan CORP,
+  // tapi longgarkan khusus path ini supaya share card aman di semua klien.
+  if (isOgImagePath(new URL(request.url).pathname)) {
+    headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
   }
   // Staging tidak boleh terlisting di search engine.
   if (!env.isProd) {
