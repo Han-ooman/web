@@ -9,8 +9,10 @@ import {
   useParams,
 } from 'react-router';
 import {
+  Anchor,
   Button,
   ColorSchemeScript,
+  Group,
   MantineProvider,
   Stack,
   Text,
@@ -20,6 +22,7 @@ import {
   mantineHtmlProps,
 } from '@mantine/core';
 import { Home, AlertCircle, RefreshCw } from 'lucide-react';
+import { useEffect } from 'react';
 import type { Route } from './+types/root';
 import {
   DEFAULT_LOCALE,
@@ -28,6 +31,7 @@ import {
 } from '@/application/i18n/locales';
 import { getFixedT } from '@/application/i18n/i18n-instance';
 import { AppError } from './infrastructure/api/api-client';
+import { env } from './infrastructure/config/env';
 import './presentation/styles/app.css';
 
 const theme = createTheme({
@@ -56,6 +60,7 @@ export const links: Route.LinksFunction = () => [
     title: 'SambasKu RSS',
     href: '/rss.xml',
   },
+  { rel: 'manifest', href: '/manifest.webmanifest' },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -67,6 +72,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* theme-color mengikuti skema warna aktif (address bar mobile) */}
+        <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1b1e" />
         <Meta />
         <Links />
         <ColorSchemeScript defaultColorScheme="auto" />
@@ -83,6 +91,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  useEffect(() => {
+    // SW hanya di produksi: staging/dev bebas cache yang membingungkan.
+    if (env.isProd && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {
+        // gagal register (mis. browser privat): abaikan, situs tetap jalan
+      });
+    }
+  }, []);
   return <Outlet />;
 }
 
@@ -155,6 +171,64 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
           </Button>
         )}
       </Stack>
+
+      {/* Penangkap pengunjung dari link mati / URL salah: form pencarian
+          native (GET, tanpa JS baru) + pintasan alfabetis. */}
+      {is404 && (
+        <Stack align="center" gap="xs" mt="xl" maw={420} w="100%">
+          <form
+            method="get"
+            action={localePath(locale, '/search')}
+            style={{ display: 'flex', gap: 8, width: '100%' }}
+          >
+            <input
+              type="search"
+              name="q"
+              placeholder={t('search_placeholderLemma')}
+              aria-label={t('search_placeholderLemma')}
+              style={{
+                flex: 1,
+                padding: '8px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--mantine-color-default-border)',
+                background: 'var(--mantine-color-body)',
+                color: 'var(--mantine-color-text)',
+                fontSize: 14,
+              }}
+            />
+            <button
+              type="submit"
+              style={{
+                padding: '8px 14px',
+                borderRadius: 8,
+                border: 'none',
+                background: 'var(--mantine-primary-color-filled)',
+                color: 'var(--mantine-color-white)',
+                fontSize: 14,
+                cursor: 'pointer',
+              }}
+            >
+              {t('search_submit')}
+            </button>
+          </form>
+          <Group gap={4} justify="center" wrap="wrap">
+            {'abcdefghijklmnopqrstuvwxyz'
+              .split('')
+              .map((l) => (
+                <Anchor
+                  key={l}
+                  component={Link}
+                  to={localePath(locale, `/huruf/${l}`)}
+                  size="xs"
+                  c="dimmed"
+                  tt="uppercase"
+                >
+                  {l}
+                </Anchor>
+              ))}
+          </Group>
+        </Stack>
+      )}
     </Stack>
   );
 }

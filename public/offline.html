@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Anda sedang offline - SambasKu</title>
+  <meta name="robots" content="noindex" />
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #ffffff;
+      color: #1a1b1e;
+    }
+    @media (prefers-color-scheme: dark) {
+      body { background: #1a1b1e; color: #c8cdd6; }
+      a { color: #4dabf7 !important; }
+    }
+    .card { max-width: 420px; padding: 32px; text-align: center; }
+    .dot {
+      width: 14px; height: 14px; border-radius: 4px;
+      background: #228be6; display: inline-block; margin-right: 8px;
+    }
+    h1 { font-size: 20px; margin: 16px 0 8px; }
+    p { font-size: 14px; line-height: 1.6; opacity: 0.75; margin: 0 0 20px; }
+    a, button {
+      display: inline-block;
+      padding: 9px 16px;
+      border-radius: 8px;
+      border: none;
+      background: #228be6;
+      color: #fff;
+      font-size: 14px;
+      text-decoration: none;
+      cursor: pointer;
+      margin: 0 4px;
+    }
+    a.ghost, button.ghost { background: transparent; border: 1px solid currentColor; color: inherit; opacity: 0.8; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div><span class="dot"></span><strong>SambasKu</strong></div>
+    <h1>Anda sedang offline</h1>
+    <p>Halaman yang pernah Anda buka tetap bisa diakses tanpa jaringan. Kata lain perlu koneksi internet.</p>
+    <button onclick="location.reload()">Coba Lagi</button>
+    <a class="ghost" href="/id">Ke Beranda</a>
+  </main>
+</body>
+</html>

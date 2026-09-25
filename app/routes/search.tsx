@@ -118,7 +118,9 @@ export default function SearchPage() {
     <Container size="md" py="xl">
       <Stack gap="lg">
         <Stack align="center" gap="md">
-          <Title order={2} ta="center">
+          {/* Satu-satunya h1 halaman ini (QA UX-08); size="h2" pertahankan
+              tampilan. Halaman noindex tapi struktur tetap benar. */}
+          <Title order={1} size="h2" ta="center">
             {t('search_pageTitle')}
           </Title>
           <SearchBar initialQuery={q} initialDirection={searchIn} />

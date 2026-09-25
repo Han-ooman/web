@@ -32,8 +32,17 @@ get_headers() {
   curl -fsS -D - -o /dev/null --max-time 30 "$BASE$1" 2>/dev/null || true
 }
 
+# curl -w sudah mencetak 000 saat koneksi gagal. Jangan tambah `|| echo 000`:
+# hasilnya jadi 000000, tidak sama dengan 000, dan guard "belum live" tidak
+# pernah menyala.
 get_status() {
-  curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$BASE$1" 2>/dev/null || echo "000"
+  local code
+  code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "$BASE$1" 2>/dev/null)" || true
+  if [ -z "$code" ] || [ "$code" = "000" ]; then
+    echo "000"
+  else
+    echo "$code"
+  fi
 }
 
 xcache_of() {
@@ -53,20 +62,39 @@ assert_xcache() {
 
 echo "== Verifikasi perilaku cache edge: $BASE (profil: $PROFILE) =="
 
-# Fail-fast: kalau host tidak bisa dijangkau (DNS mati, worker down), semua
-# x-cache akan kosong dan pesan assertion jadi menyesatkan ("cache mati"
-# padahal request tidak pernah sampai). Uji dulu sebelum assertion lain.
-# Staging sengaja di-skip (custom domain tidak dipelihara saat ini); prod
-# tetap wajib terjangkau.
-REACH_STATUS="$(get_status "/")"
-if [ "$REACH_STATUS" = "000" ]; then
-  if [ "$PROFILE" = "staging" ]; then
-    echo "::warning::$BASE tidak dapat dijangkau (DNS staging tidak dipelihara). Skip verifikasi staging."
-    exit 0
-  fi
-  echo "::error::$BASE tidak dapat dijangkau (DNS/worker down, curl exit non-zero). Periksa record DNS custom domain dan status deploy worker."
+# Jangan assert perilaku sebelum worker yang memperbaiki cache benar-benar
+# yang menjawab. Build lama tidak mengirim x-cache; mengeceknya menghasilkan
+# enam kegagalan palsu ("cache mati") padahal perbaikannya belum naik.
+# Worker baru selalu menset header itu (bypass/miss/hit), termasuk pada
+# redirect. Tunggu sinyal itu, baru lanjut.
+wait_until_fix_live() {
+  local attempt=0
+  local max_attempts=12
+  while [ "$attempt" -lt "$max_attempts" ]; do
+    local status got
+    status="$(get_status "/")"
+    if [ "$status" = "000" ]; then
+      if [ "$PROFILE" = "staging" ]; then
+        echo "::warning::$BASE tidak dapat dijangkau (DNS staging tidak dipelihara). Perbaikan belum terlihat di URL ini. Skip verifikasi staging."
+        exit 0
+      fi
+      echo "::error::$BASE tidak dapat dijangkau (DNS/worker down). Periksa record DNS custom domain dan status deploy worker."
+      exit 1
+    fi
+    got="$(xcache_of "/")"
+    if [ -n "$got" ]; then
+      echo "ok   worker baru menjawab / -> x-cache: $got"
+      return 0
+    fi
+    attempt=$((attempt + 1))
+    echo "tunggu worker baru ($attempt/$max_attempts): / menjawab tanpa x-cache"
+    sleep 5
+  done
+  echo "::error::$BASE masih menjawab tanpa x-cache. Perbaikan cache belum naik; assertion perilaku tidak dijalankan."
   exit 1
-fi
+}
+
+wait_until_fix_live
 
 # Staging memang 404 di /sitemap.xml (route menolak saat !isProd) dan korpus
 # kata bisa berbeda dari produksi, jadi dua assertion itu khusus prod.
