@@ -50,7 +50,7 @@
   "search_clearAria": "Barsehkan yang dicarek",
   "search_directionLemma": "Sambas → Indonesia",
   "search_directionTranslation": "Indonesia → Sambas",
-  "search_pressEnter": "Takkan enter untok nyareknye",
+  "search_pressEnter": "Piccik enter untok nyareknye",
   "search_filterType": "Pilter tipe:",
   "search_directionLabel": "Arah:",
   "search_typeAll": "Semue",
@@ -65,8 +65,8 @@
   "search_missBody": "Kosakate itok sian tedaftar di kamus. Kamek udah nyatat ape yang direk carek supaye bise diliatek lah tim verifikator kamek.",
   "search_missCta": "Ajukan kate ittok ke kamus",
   "word_homeCrumb": "Selasar",
-  "word_wordsCrumb": "Daftar Kate A-Z",
-  "word_backToList": "Balik ke daftar",
+  "word_wordsCrumb": "Daptar Kate A-Z",
+  "word_backToList": "Balik ke daptar",
   "word_relatedTitle": "Kate yang besangkut paot",
   "word_notFoundTitle": "Kate daan tejumpe",
   "word_notFoundBody": "Kate yang direk carek sian di kamus.",
@@ -76,17 +76,17 @@
   "word_listIntro": "Arra' kosakate Kamus Sambas yang udah terverifikasi dan tayang.",
   "word_listFilterPlaceholder": "Carek awalan atau kate...",
   "word_listFilterSubmit": "Carek",
-  "word_listClearFilterAria": "Appus pilter",
+  "word_listClearFilterAria": "Apus pilter",
   "word_listWordCount": "{{count}} kate",
   "word_listLoadNext": "Tampelkan Kate Berikutnye",
   "word_listEmptyQuery": "Sian kate yang cocok dangan \"{{q}}\"",
   "word_listEmptyNone": "Ballom ade kosakate yang ditampelkan",
   "word_listEmptyHint": "Cobe apus dolok kotak pencariek'an untok liat sumenye daftar kosakate.",
   "word_listClearFilter": "Apus Pilter",
-  "word_seoTitleTemplate": "{{lemma}} bahase Sambas - arti & tejemahan",
+  "word_seoTitleTemplate": "{{lemma}} base Sambas - arti & tejemahan",
   "word_seoDescDefinition": "Arti {{lemma}} dalam bahasa Sambas: {{definition}}",
   "word_seoDescTranslation": "Tejemahan Indonesia: {{translation}}.",
-  "word_seoDescFallbackDefinition": "makne dan pengunean dalam bahase Melayu Sambas",
+  "word_seoDescFallbackDefinition": "makne dangan pemakaian dalam base Melayu Sambas",
   "word_seoDescSuffix": "Kamus Sambas.",
   "word_imagesHeading": "Foto ({{count}})",
   "word_imageAlt": "Ilustrasi kato {{lemma}}",
@@ -101,7 +101,7 @@
   "word_imageViolenceConfirm": "Liat",
   "word_alternateNameSuffix": "{{lemma}} bahase Sambas",
   "faq_pageTitle": "FAQ",
-  "faq_intro": "Kamus Digital Awam Bahase Sambas - pelestarian bahase Melayu Sambas, akses publik, dan kontribusi komunitas.",
+  "faq_intro": "Kamus Digital Awam base Sambas - pelestarian base Melayu Sambas, akses publik, dan kontribusi komunitas.",
   "faq_footerReady": "Dah siap ke nelusoreknye ?",
   "faq_footerWords": "Bukak daftar kate A-Z",
   "faq_footerContribute": "Ajukan kate baru",
@@ -109,63 +109,63 @@
   "faq_jsonLdName": "FAQ Kamus Sambas",
   "faq_items": [
     {
-      "question": "Ape iye SambasKu?",
-      "answer": "Kamus digital Sambas-Indonesia. Nyarek arti, baca contoh, usulkan kata, bookmark, dan bagikan kartu. Temukan arti kata, pelajari bahasa setempat, dan ikut menjaga warisan kata."
+      "question": "Ape lah SambasKu ye?",
+      "answer": "Kamus digital Sambas-Indonesia. Nyarek arti, baca contoh, usulkan kate, simpanan, dan bagikan kartu. Dapatkan arti kate, pelajarek base setampat, dan ikut jage warisan kate."
     },
     {
-      "question": "Apa hubungan SambasKu, Kamus Sambas, dan Kamus Digital Sambas-Indonesia?",
-      "answer": "SambasKu adalah nama merek aplikasi dan situs. Kamus Sambas adalah nama kamus yang dicari pengguna. Kamus Digital Sambas-Indonesia adalah sebutan deskriptif produk yang sama: kamus digital bahasa Sambas & Indonesia, atau kamus terbuka bahasa Melayu Sambas ke bahasa Indonesia."
+      "question": "Ape hubungan SambasKu, Kamus Sambas, dan Kamus Digital Sambas-Indonesia?",
+      "answer": "SambasKu iyelah name merek aplikasi dan situs. Kamus Sambas iyelah name kamus yang dicarek pengguna. Kamus Digital Sambas-Indonesia iyelah deskriptif produk yang same: kamus digital bebase Sambas & Indonesia, atau kamus awam base Melayu Sambas ke base Indonesia."
     },
     {
-      "question": "Mengapa kamus ini dibuat?",
-      "answer": "Untuk pelestarian bahasa daerah - khususnya bahasa Melayu Sambas. Kamus ini dibangun secara kolaboratif bersama para penutur bahasa Melayu Sambas, didukung oleh penutur asli dan pegiat bahasa, agar kosakata terdokumentasi, mudah dipelajari, dan tetap hidup."
+      "question": "Ngapelah kamus itok dibuat ?",
+      "answer": "Barang be untuk peletarian base daerah - khususnye base Melayu Sambas. Kamus itok dibuat secare besame same dangan pare penutor base Melayu Sambas, didukung leh penutur asli dangan pegiat base sambas, biar kosakatenye tesimpan, mudah dipelajarek, dan tattap idup."
     },
     {
-      "question": "Apa yang bisa saya temukan di Kamus Sambas?",
-      "answer": "Kosakata, makna, terjemahan Indonesia, contoh kalimat, dan lafal otentik bahasa Melayu Sambas. Saat mencari, ketik lemma atau terjemahan; setiap entri dapat menampilkan kelas kata, definisi, contoh kalimat, dan variasi penulisan."
+      "question": "Ape yang bise ku junpaek di Kamus Sambas?",
+      "answer": "Kosakate, makne, tejemahan Indonesia, contoh kalimat, dan lapal otentik base Melayu Sambas. Pas nak nyarek, kattik lemma atau tejemahan; tiap pencare'an dapat nampelkan kallas kate, depinisi, contoh kalimat, dangan variasi penulisan."
     },
     {
-      "question": "Apakah saya perlu login untuk mencari kata di situs?",
-      "answer": "Tidak. Pengunjung mencari dan membaca kata sebagai tamu, tanpa login. Siapa pun dapat mencari tanpa login."
+      "question": "Apeke saye parlu masok untok nyarek kate di sitok ?",
+      "answer": "Ooo daan parlu be. Pengunjung nyarek dangan mace kate sebagai tamu, daan parlu masok. Sape pun dapat nyarek tanpe masok."
     },
     {
-      "question": "Bagaimana cara mengajukan kata baru di situs web?",
-      "answer": "Lewat halaman Kontribusi (“Ajukan Kata Baru”). Dikirim sebagai tamu. Kata belum tayang. Tim akan memeriksanya dulu, lalu menampilkannya di daftar kata. Terima kasih menjaga bahasa Sambas tetap hidup."
+      "question": "Gimane care ngajukan kate baru disitok ?",
+      "answer": "Sile paggi ke alaman Kontribusi (“Ajukan Kate Baru”). Dikirim sebagai tamu. tapi kateny balom tayang. Tim ngeceknye dolok, kakye pun udah, kateny muncol di daptar. Makkaseh udah jage base Sambas tatap idup."
     },
     {
-      "question": "Bagaimana kontribusi di aplikasi mobile?",
-      "answer": "Warga mengusulkan kata baru atau perbaikan. Di aplikasi, usulan langsung tayang dengan label Menunggu pengecekan. Kontributor bisa mengajukan diri jadi verifikator. Cari lemma dengan cepat, usulkan kata baru atau perbaikan, dan bookmark entri favorit untuk dibaca ulang."
+      "question": "Gimane care kontribusi di aplikasi hape ?",
+      "answer": "Warge bise ngusolkan kate baru ataunak pembatolan Di aplikasi, usolan langsung muncol dangan tande Nunggu kannak cek. Kontributor bise ngajukan direk jadi verifikator. Carek lemma dangan cappat, usolkan kate baru atau pembatolan, dan simpan masokkan ke kesukaan untok dibace ulang."
     },
     {
-      "question": "Apa arti badge Terverifikasi dan Menunggu pengecekan?",
-      "answer": "Chip Terverifikasi menandakan entri sudah diperiksa. Chip Menunggu pengecekan berarti kata belum diperiksa tim Sambasku. Artinya atau terjemahannya bisa saja kurang tepat. Kata hari ini hanya yang sudah published dan Terverifikasi."
+      "question": "Ape arti simbol Terverifikasi dangan Nunggu kannak cek ?",
+      "answer": "Chip Terverifikasi tandenye masokkan udah diperikse. Chip Nunggu kannak cek ratinye katenye balom kanak perikse tim Sambasku. Artinya atau tejemahannya bise ajak kurang tappat. Kate ari itok hanya ade pun udah temasok dan Terverifikasi."
     },
     {
-      "question": "Siapa yang merawat kamus ini?",
-      "answer": "Bersama warga Sambas. Kamus ini dirawat orang-orang yang mengusulkan kata, memeriksa entri, dan merekam pelafalan. Pengusul mengirim kata baru atau perbaikan. Verifikator memeriksa usulan sebelum masuk kamus. Kontributor pelafalan merekam cara mengucapkan kata agar bisa didengar."
+      "question": "Sape sape yang merawat kamus itok ?",
+      "answer": "Warge sambas besame. Kamus itok dirawat urang-urang yang ngusolkan kate, merikse masokan, dan merakam penyabutan katenye. Pengusol ngirim kate baru atau ndk pembetolan. Verifikator merikse usolah kate sebelum masok ke kamus. Kontributor penyabutan merakkam care ngucapkan kate biar bise didangar."
     },
     {
-      "question": "Apakah akses pencarian berbayar? Di mana kode sumbernya?",
-      "answer": "Situs dan aplikasi ditujukan untuk akses publik tanpa biaya pencarian. Kode sumber proyek tersedia di GitHub (github.com/sambasku) agar transparan dan dapat dikembangkan bersama komunitas."
+      "question": "Apeke akses pencarea'an bebayar ? Dimane kode sumbernye ",
+      "answer": "Situs dan aplikasiny iye ditujukan untok akses publik daan pakai barai. Kode sumber proyekny tesedie di GitHub (github.com/sambasku) biar transparan dan dapat dikambangkan besame komunitas."
     },
     {
-      "question": "Ada aplikasi mobile-nya?",
-      "answer": "Ada. Aplikasi Android SambasKu tersedia di Google Play (paket com.iamutaki.sambasku) untuk mencari dan menjelajah kamus di ponsel, melengkapi pengalaman di situs web. Subtitle aplikasi: Kamus Digital Sambas-Indonesia."
+      "question": "Ade ke aplikasi hapenye ?",
+      "answer": "Ade. Aplikasi Android SambasKu dah ade di Google Play (paket com.iamutaki.sambasku) untok nyarek dangan bejanjang di kamus di ponsel, melangkapek pengalaman di situs web. Subtitle aplikasi: Kamus Digital Sambas-Indonesia."
     }
   ],
   "seo_homeTitle": "Kamus Sambas",
-  "seo_homeDescription": "Kamus Sambas digital terbuka: cari kosakata Melayu Sambas, makna, terjemahan Indonesia, contoh kalimat, dan lafal. Jelajahi daftar A-Z atau kontribusi kato baru.",
-  "seo_faqTitle": "FAQ - Tentang SambasKu",
-  "seo_faqDescription": "Apa itu SambasKu dan Kamus Sambas, mengapa dibuat untuk pelestarian bahasa Melayu Sambas, cara kontribusi, status Terverifikasi, dan aplikasi Android.",
-  "seo_wordsDescription": "Telusuri daftar kata Kamus Sambas dari A sampai Z. Setiap entri memuat makna, terjemahan Indonesia, dan telah diterbitkan serta diverifikasi.",
-  "seo_searchTitle": "Pencarian {{query}}",
-  "seo_searchDescription": "Hasil pencarian kosakata {{query}} dalam Kamus Digital Sambas-Indonesia.",
-  "seo_searchQueryFallback": "Kosakata",
+  "seo_homeDescription": "Kamus Sambas digital publik: carek kosakate Melayu Sambas, makne, tejemahan Indonesia, contoh kalimat, dan sabutan. Jelajahek daftar A-Z atau kontribusi kate baru.",
+  "seo_faqTitle": "FAQ - Tetang SambasKu",
+  "seo_faqDescription": "Ape ye SambasKu dan Kamus Sambas, ngape dibuat untok pelestarian bahasa Melayu Sambas, care kontribusi, status Terverifikasi, dan aplikasi Android.",
+  "seo_wordsDescription": "Telusurek daptar kate Kamus Sambas dari A sampai Z. Tiap masukkan memuat makne, tejemahan Indonesia, dan udah diterbitkan dangan diverifikasi.",
+  "seo_searchTitle": "Pencare'am {{query}}",
+  "seo_searchDescription": "Hasel pencarek'an kosakate {{query}} dalam Kamus Digital Sambas-Indonesia.",
+  "seo_searchQueryFallback": "Kosakate",
   "seo_websiteName": "Kamus Sambas",
   "seo_websiteAlternateName": "Kamus Digital Sambas-Indonesia",
-  "errors_generic": "Terjadi kesalahan pada sistem.",
-  "errors_genericDetail": "Mohon coba beberapa saat lagi.",
-  "errors_notFoundTitle": "Halaman Tidak Ditemukan (404)",
-  "errors_notFoundDetail": "Kosakata atau tautan yang kamu tuju belum tersedia atau telah dipindahkan.",
-  "errors_errorStatus": "Error {{status}}"
+  "errors_generic": "Ade yang salah dengan sistemny tok ee.",
+  "errors_genericDetail": "Cobe agek kallak iii.",
+  "errors_notFoundTitle": "Halaman daan tejumpe (404)",
+  "errors_notFoundDetail": "Kosakate atau sambongan yang direk tuju balom tesedie atau udah dipindahkan.",
+  "errors_errorStatus": "Eh cacat... {{status}}"
 }
