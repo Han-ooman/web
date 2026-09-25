@@ -48,6 +48,10 @@ import {
 } from '../domain/usage-labels';
 import { UsageLabelChips } from '../presentation/components/word/usage-label-chips';
 import {
+  ContributionImagesField,
+  type ContributionImageSlot,
+} from '../presentation/components/media-explorer/contribution-images-field';
+import {
   listDialects,
   listLanguages,
   listWordClasses,
@@ -102,7 +106,7 @@ function searchSimilarLemmas(q: string): Promise<WordSummary[]> {
 
 /**
  * Debounce pencarian. Hasil pendek / belum siap dihitung saat render,
- * setState hanya di callback timeout — bukan sinkron di badan effect.
+ * setState hanya di callback timeout - bukan sinkron di badan effect.
  */
 function useDebouncedQuery<T>(
   rawQuery: string,
@@ -471,6 +475,7 @@ export default function KontribusiPage() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [images, setImages] = useState<ContributionImageSlot[]>([]);
 
   const usageLabelsConflict = hasConflictingUsageLabels(usageLabels);
 
@@ -593,6 +598,17 @@ export default function KontribusiPage() {
           word_type: 'word',
           usage_labels: usageLabels,
           meanings,
+          ...(images.length > 0
+            ? {
+                images: images.map((img) => ({
+                  url: img.url,
+                  provider: img.provider,
+                  provider_file_id: img.provider_file_id,
+                  alt_text: img.alt_text.trim() || undefined,
+                  is_primary: img.is_primary,
+                })),
+              }
+            : {}),
         }),
       });
       setSuccess(word);
@@ -602,6 +618,7 @@ export default function KontribusiPage() {
       setStandardDefinition('');
       setStandardWordClassId(umumWordClassId);
       setMaknaList([{ ...emptyMakna, wordClassId: umumWordClassId }]);
+      setImages([]);
     } catch (err) {
       if (err instanceof AppError && err.details?.length) {
         setError(err.details.map((d) => d.message).join('. '));
@@ -781,7 +798,7 @@ export default function KontribusiPage() {
                   Gaya bahasa & peringatan
                 </Text>
                 <Text size="xs" c="dimmed">
-                  Opsional. Ketuk yang sesuai — bantu pembaca paham gaya dan sensitivitas isi.
+                  Opsional. Ketuk yang sesuai - bantu pembaca paham gaya dan sensitivitas isi.
                 </Text>
                 <UsageLabelChips
                   caption="Gaya bahasa"
@@ -801,6 +818,9 @@ export default function KontribusiPage() {
                   </Text>
                 )}
               </Stack>
+
+              <Divider label="Gambar" labelPosition="center" />
+              <ContributionImagesField images={images} onChange={setImages} />
 
               {advanced && (
                 <>

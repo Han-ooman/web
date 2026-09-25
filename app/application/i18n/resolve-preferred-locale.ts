@@ -44,6 +44,13 @@ export function resolvePreferredLocale(request: Request): AppLocale {
   return DEFAULT_LOCALE;
 }
 
+/// Nilai cookie sk_locale request, null jika belum ada (pentest G-01:
+/// loader locale-layout memakai ini untuk menghindari Set-Cookie yang
+/// tidak perlu pada visitor lama).
+export function localeCookieValue(request: Request): string | null {
+  return parseCookie(request.headers.get('Cookie'), LOCALE_COOKIE);
+}
+
 export function localeCookieHeader(locale: AppLocale): string {
   // 1 tahun; SameSite=Lax. HttpOnly+Secure: nilai cookie ini tidak pernah
   // dibaca JavaScript (resolve dilakukan server-side), jadi tidak ada alasan

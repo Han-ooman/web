@@ -12,7 +12,7 @@ export interface SearchWordsParams {
 
 export interface ListWordsParams {
   q?: string;
-  /** Satu huruf A–Z: prefix lemma (panel beranda). Beda dari q = contains. */
+  /** Satu huruf A-Z: prefix lemma (panel beranda). Beda dari q = contains. */
   letter?: string;
   limit?: number;
   cursor?: string;

@@ -43,7 +43,7 @@ export const PROMINENT_USAGE_LABELS = new Set<UsageLabel>([
 
 /**
  * Label yang disembunyikan dari browsing A-Z publik (GET /words tanpa q).
- * Sinkron API `BROWSE_EXCLUDED_USAGE_LABELS` — filter di server, bukan client.
+ * Sinkron API `BROWSE_EXCLUDED_USAGE_LABELS` - filter di server, bukan client.
  */
 export const BROWSE_EXCLUDED_USAGE_LABELS = [
   'kasar',

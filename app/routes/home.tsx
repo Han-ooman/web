@@ -129,7 +129,7 @@ export default function Home() {
             <Stack gap="md">
               <Group justify="space-between" align="center" gap="md" wrap="wrap">
                 <Group gap="sm" wrap="nowrap" maw={480} style={{ flex: 1 }}>
-                  <PlusCircle size={18} style={{ flexShrink: 0 }} />
+                  <PlusCircle size={22} style={{ flexShrink: 0 }} />
                   <Stack gap={2}>
                     <Text size="sm" fw={600}>
                       {t('home_ctaTitle')}
@@ -144,7 +144,7 @@ export default function Home() {
                   to={lp('/kontribusi')}
                   variant="light"
                   size="compact-sm"
-                  leftSection={<PlusCircle size={14} />}
+                  leftSection={<PlusCircle size={16} />}
                 >
                   {t('home_ctaButton')}
                 </Button>
@@ -154,7 +154,7 @@ export default function Home() {
 
               <Group justify="space-between" align="center" gap="md" wrap="wrap">
                 <Group gap="sm" wrap="nowrap" maw={480} style={{ flex: 1 }}>
-                  <Languages size={18} style={{ flexShrink: 0 }} />
+                  <Languages size={22} style={{ flexShrink: 0 }} />
                   <Stack gap={2}>
                     <Text size="sm" fw={600}>
                       {t('home_askTitle')}
@@ -196,8 +196,8 @@ export default function Home() {
                   <Image
                     src="/whatsapp.svg"
                     alt=""
-                    h={18}
-                    w={18}
+                    h={22}
+                    w={22}
                     fit="contain"
                     decoding="async"
                     aria-hidden

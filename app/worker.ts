@@ -170,7 +170,11 @@ function forBrowser(response: Response, cacheStatus: string): Response {
 /** TTL entry cache menurut status respons; 0 = jangan di-cache. */
 function cacheTtlS(pathname: string, status: number): number {
   if (status === 200) return STALE_MAX_S;
-  if (status === 404 && pathname.startsWith('/words/')) return NEGATIVE_TTL_S;
+  // Path nyata selalu berprefix /:locale - cek path BARE, bukan mentah
+  // (pentest G-02: '/id/words/…' tak pernah match '/words/' sehingga
+  // negative cache 404 tidak pernah aktif).
+  const { path: bare } = stripLocalePrefix(pathname);
+  if (status === 404 && bare.startsWith('/words/')) return NEGATIVE_TTL_S;
   return 0;
 }
 
@@ -183,6 +187,11 @@ async function renderAndCache(
   const ttlS = cacheTtlS(new URL(request.url).pathname, response.status);
   if (ttlS > 0) {
     const headers = new Headers(response.headers);
+    // Cache API menolak menyimpan respons ber-Set-Cookie: put() jadi no-op
+    // diam-diam sehingga edge cache HTML mati total (pentest G-01). Entry
+    // cache memang harus bebas state per-user; cookie tetap sampai ke browser
+    // lewat `response` yang dikembalikan.
+    headers.delete('Set-Cookie');
     headers.set('x-cached-at', String(Date.now()));
     headers.set('x-cache-ttl', String(ttlS));
     headers.set('Cache-Control', `public, max-age=${ttlS}`);
