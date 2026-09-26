@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import {
   ActionIcon,
   Tooltip,
@@ -7,13 +7,16 @@ import {
 } from '@mantine/core';
 import { Sun, Moon } from 'lucide-react';
 
+function subscribeNoop() {
+  return () => {};
+}
+
 export function ThemeToggle() {
   const { setColorScheme } = useMantineColorScheme();
   const computed = useComputedColorScheme('light');
-  // Server selalu merender skema default; nilai localStorage baru terbaca
-  // setelah mount - gate ikon agar tidak hydration mismatch.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  // Server/hidrasi: false. Client: true. Ikon mengikuti skema hanya setelah
+  // hidrasi supaya markup awal sama dengan HTML server.
+  const mounted = useSyncExternalStore(subscribeNoop, () => true, () => false);
 
   const isDark = mounted && computed === 'dark';
 

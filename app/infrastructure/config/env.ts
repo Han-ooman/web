@@ -3,8 +3,8 @@ const DEFAULT_API_BASE_URL = typeof window === 'undefined'
   : '/api/v1';
 
 const DEFAULT_APP_URL = typeof window === 'undefined'
-  ? 'https://sambasku.iamutaki.com'
-  : (typeof window !== 'undefined' ? window.location.origin : 'https://sambasku.iamutaki.com');
+  ? 'https://sambasku.com'
+  : (typeof window !== 'undefined' ? window.location.origin : 'https://sambasku.com');
 
 const DEFAULT_APP_NAME = 'Kamus Digital Sambas-Indonesia';
 

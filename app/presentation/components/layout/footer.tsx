@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import { Anchor, Container, Divider, Group, Stack, Text } from '@mantine/core';
-import { Heart, ExternalLink } from 'lucide-react';
+import { Heart, ExternalLink, Rss } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Logo } from './logo';
 import { useLocalePath } from '@/application/i18n/use-locale';
@@ -8,7 +8,7 @@ import { useLocalePath } from '@/application/i18n/use-locale';
 export function Footer() {
   const currentYear = new Date().getFullYear();
   const { t } = useTranslation();
-    const lp = useLocalePath();
+  const lp = useLocalePath();
 
   return (
     <Container size="md" py="md">
@@ -21,11 +21,26 @@ export function Footer() {
         </Group>
 
         <Group gap="lg" justify="center">
-          <Anchor component={Link} to={lp('/words')} size="xs" c="dimmed" py={4}>
+          <Anchor
+            component={Link}
+            to={lp('/words')}
+            size="xs"
+            c="dimmed"
+            py={4}
+          >
             {t('nav_words')}
           </Anchor>
           <Anchor component={Link} to={lp('/faq')} size="xs" c="dimmed" py={4}>
             {t('nav_faq')}
+          </Anchor>
+          <Anchor
+            component={Link}
+            to={lp('/api-publik')}
+            size="xs"
+            c="dimmed"
+            py={4}
+          >
+            {t('nav_apiPublik')}
           </Anchor>
           <Anchor
             component={Link}
@@ -36,19 +51,32 @@ export function Footer() {
           >
             {t('nav_privacy')}
           </Anchor>
-          <Anchor component={Link} to={lp('/search')} size="xs" c="dimmed" py={4}>
+          <Anchor
+            component={Link}
+            to={lp('/search')}
+            size="xs"
+            c="dimmed"
+            py={4}
+          >
             {t('nav_searchFull')}
           </Anchor>
           <Anchor
             href="https://github.com/sambasku"
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             size="xs"
             c="dimmed"
           >
             <Group gap={4} wrap="nowrap">
               <ExternalLink size={13} />
               {t('nav_github')}
+            </Group>
+          </Anchor>
+          {/* Feed publik tanpa prefix locale (data kamus identik antar locale). */}
+          <Anchor href="/rss.xml" size="xs" c="dimmed" py={4}>
+            <Group gap={4} wrap="nowrap">
+              <Rss size={13} />
+              {t('nav_rss')}
             </Group>
           </Anchor>
         </Group>

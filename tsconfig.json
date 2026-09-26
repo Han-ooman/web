@@ -19,6 +19,7 @@
     "strict": true,
     "allowJs": true,
     "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
     "forceConsistentCasingInFileNames": true,
     "rootDirs": [".", "./.react-router/types"],
     "paths": {

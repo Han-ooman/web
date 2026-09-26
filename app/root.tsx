@@ -9,8 +9,10 @@ import {
   useParams,
 } from 'react-router';
 import {
+  Anchor,
   Button,
   ColorSchemeScript,
+  Group,
   MantineProvider,
   Stack,
   Text,
@@ -20,6 +22,7 @@ import {
   mantineHtmlProps,
 } from '@mantine/core';
 import { Home, AlertCircle, RefreshCw } from 'lucide-react';
+import { useEffect } from 'react';
 import type { Route } from './+types/root';
 import {
   DEFAULT_LOCALE,
@@ -28,6 +31,7 @@ import {
 } from '@/application/i18n/locales';
 import { getFixedT } from '@/application/i18n/i18n-instance';
 import { AppError } from './infrastructure/api/api-client';
+import { env } from './infrastructure/config/env';
 import './presentation/styles/app.css';
 
 const theme = createTheme({
@@ -36,7 +40,12 @@ const theme = createTheme({
 });
 
 export const links: Route.LinksFunction = () => [
-  { rel: 'icon', href: '/favicon-192.png', type: 'image/png', sizes: '192x192' },
+  {
+    rel: 'icon',
+    href: '/favicon-192.png',
+    type: 'image/png',
+    sizes: '192x192',
+  },
   { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
   {
     rel: 'preload',
@@ -45,6 +54,25 @@ export const links: Route.LinksFunction = () => [
     type: 'font/woff2',
     crossOrigin: 'anonymous',
   },
+  {
+    rel: 'alternate',
+    type: 'application/rss+xml',
+    title: 'SambasKu RSS',
+    href: '/rss.xml',
+  },
+  {
+    rel: 'alternate',
+    type: 'text/plain',
+    title: 'llms.txt',
+    href: '/llms.txt',
+  },
+  {
+    rel: 'alternate',
+    type: 'text/plain',
+    title: 'llms-full.txt',
+    href: '/llms-full.txt',
+  },
+  { rel: 'manifest', href: '/manifest.webmanifest' },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -56,6 +84,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* theme-color mengikuti skema warna aktif (address bar mobile) */}
+        <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1b1e" />
+        {/* iOS Add to Home Screen: tanpa trio ini ikon tetap membuka tab Safari. */}
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="SambasKu" />
         <Meta />
         <Links />
         <ColorSchemeScript defaultColorScheme="auto" />
@@ -72,6 +108,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  useEffect(() => {
+    // SW hanya di produksi: staging/dev bebas cache yang membingungkan.
+    if (env.isProd && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {
+        // gagal register (mis. browser privat): abaikan, situs tetap jalan
+      });
+    }
+  }, []);
   return <Outlet />;
 }
 
@@ -91,7 +135,13 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
       details = t('errors_notFoundDetail');
     } else {
       message = t('errors_errorStatus', { status: error.status });
-      details = error.statusText || details;
+      // `statusText` datang dari Response yang dilempar loader dan sepenuhnya
+      // di luar kendali kita. Untuk 5xx-ish ia boleh memuat detail internal
+      // (pesan fetch, nama host, dsb), jadi pakai teks generik - tidak pernah
+      // render apa pun dari sumber tak tepercaya di status server (pentest
+      // BH-13). Di bawah 500 statusText selalu literal HTTP, jadi aman.
+      details =
+        error.status >= 500 ? t('errors_generic') : error.statusText || details;
     }
   } else if (error instanceof AppError) {
     // Hanya pesan error aplikasi (milik kita, user-facing) yang boleh
@@ -138,6 +188,64 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
           </Button>
         )}
       </Stack>
+
+      {/* Penangkap pengunjung dari link mati / URL salah: form pencarian
+          native (GET, tanpa JS baru) + pintasan alfabetis. */}
+      {is404 && (
+        <Stack align="center" gap="xs" mt="xl" maw={420} w="100%">
+          <form
+            method="get"
+            action={localePath(locale, '/search')}
+            style={{ display: 'flex', gap: 8, width: '100%' }}
+          >
+            <input
+              type="search"
+              name="q"
+              placeholder={t('search_placeholderLemma')}
+              aria-label={t('search_placeholderLemma')}
+              style={{
+                flex: 1,
+                padding: '8px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--mantine-color-default-border)',
+                background: 'var(--mantine-color-body)',
+                color: 'var(--mantine-color-text)',
+                fontSize: 14,
+              }}
+            />
+            <button
+              type="submit"
+              style={{
+                padding: '8px 14px',
+                borderRadius: 8,
+                border: 'none',
+                background: 'var(--mantine-primary-color-filled)',
+                color: 'var(--mantine-color-white)',
+                fontSize: 14,
+                cursor: 'pointer',
+              }}
+            >
+              {t('search_submit')}
+            </button>
+          </form>
+          <Group gap={4} justify="center" wrap="wrap">
+            {'abcdefghijklmnopqrstuvwxyz'
+              .split('')
+              .map((l) => (
+                <Anchor
+                  key={l}
+                  component={Link}
+                  to={localePath(locale, `/huruf/${l}`)}
+                  size="xs"
+                  c="dimmed"
+                  tt="uppercase"
+                >
+                  {l}
+                </Anchor>
+              ))}
+          </Group>
+        </Stack>
+      )}
     </Stack>
   );
 }

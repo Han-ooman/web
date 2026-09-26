@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Group, Modal, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { Image as ImageIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -24,11 +24,14 @@ export function WordImagesGallery({
   const { t } = useTranslation();
   const [violenceRevealed, setViolenceRevealed] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-
-  useEffect(() => {
+  // Reset saat pindah kata. Selama render (bukan effect) supaya tidak
+  // ada render tambahan: React membuang state lama sebelum paint.
+  const [seenWordId, setSeenWordId] = useState(wordId);
+  if (wordId !== seenWordId) {
+    setSeenWordId(wordId);
     setViolenceRevealed(false);
     setConfirmOpen(false);
-  }, [wordId]);
+  }
 
   if (images.length === 0) return null;
 

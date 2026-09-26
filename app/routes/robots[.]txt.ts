@@ -6,7 +6,7 @@ import { env } from '@/infrastructure/config/env';
  */
 export async function loader() {
   const body = env.isProd
-    ? `User-agent: *\nAllow: /\n\nSitemap: ${env.appUrl}/sitemap.xml\n`
+    ? `User-agent: *\nAllow: /\n\n# Panduan agen: ${env.appUrl}/llms.txt\n# Korpus terverifikasi: ${env.appUrl}/llms-full.txt\n\nSitemap: ${env.appUrl}/sitemap.xml\n`
     : 'User-agent: *\nDisallow: /\n';
 
   return new Response(body, {

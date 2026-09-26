@@ -6,8 +6,10 @@ import {
   Button,
   Card,
   Container,
+  Divider,
   Group,
   Image,
+  Paper,
   Stack,
   Text,
   Title,
@@ -50,11 +52,13 @@ export async function loader({ request }: Route.LoaderArgs) {
 const ALPHABETS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const PLAY_STORE_URL =
   'https://play.google.com/store/apps/details?id=com.iamutaki.sambasku';
+const WHATSAPP_GROUP_URL =
+  'https://chat.whatsapp.com/Kw64lxFEGXfK5gw6T6GEoN?mode=gi_t';
 
 export default function Home() {
   const { wordOfDay } = useLoaderData<typeof loader>();
   const { t } = useTranslation();
-    const lp = useLocalePath();
+  const lp = useLocalePath();
 
   return (
     <Container size="md" py={44}>
@@ -62,7 +66,7 @@ export default function Home() {
         <Stack align="center" gap="md" maw={640} mx="auto" pt="sm">
           <Badge
             variant="light"
-            color="amber"
+            color="yellow"
             leftSection={<Sparkles size={13} />}
             size="sm"
           >
@@ -104,7 +108,7 @@ export default function Home() {
               <ActionIcon
                 key={letter}
                 component={Link}
-                to={lp('/words', `?q=${letter}`)}
+                to={lp(`/huruf/${letter.toLowerCase()}`)}
                 variant="default"
                 size="input-lg"
                 radius="sm"
@@ -116,26 +120,136 @@ export default function Home() {
           </Group>
         </Stack>
 
-        <Card withBorder padding="lg" radius="md">
-          <Group justify="space-between" align="center" gap="lg" wrap="wrap">
-            <Stack gap={4} maw={520}>
-              <Title order={3} size="h4">
-                {t('home_ctaTitle')}
-              </Title>
-              <Text size="sm" c="dimmed">
-                {t('home_ctaBody')}
-              </Text>
-            </Stack>
+        <Stack gap="sm">
+          <Title order={2} size="h5" c="dimmed" tt="uppercase" fw={600}>
+            {t('home_joinHeading')}
+          </Title>
 
-            <Button
-              component={Link}
-              to={lp('/kontribusi')}
-              variant="light"
-              leftSection={<PlusCircle size={16} />}
-            >
-              {t('home_ctaButton')}
-            </Button>
-          </Group>
+          <Card withBorder padding="md" radius="md">
+            <Stack gap="md">
+              <Group justify="space-between" align="center" gap="md" wrap="wrap">
+                <Group gap="sm" wrap="nowrap" maw={480} style={{ flex: 1 }}>
+                  <PlusCircle size={22} style={{ flexShrink: 0 }} />
+                  <Stack gap={2}>
+                    <Text size="sm" fw={600}>
+                      {t('home_ctaTitle')}
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                      {t('home_ctaBody')}
+                    </Text>
+                  </Stack>
+                </Group>
+                <Button
+                  component={Link}
+                  to={lp('/kontribusi')}
+                  variant="light"
+                  size="compact-sm"
+                  leftSection={<PlusCircle size={16} />}
+                >
+                  {t('home_ctaButton')}
+                </Button>
+              </Group>
+
+              <Divider />
+
+              <Group justify="space-between" align="center" gap="md" wrap="wrap">
+                <Group gap="sm" wrap="nowrap" maw={480} style={{ flex: 1 }}>
+                  <Languages size={22} style={{ flexShrink: 0 }} />
+                  <Stack gap={2}>
+                    <Text size="sm" fw={600}>
+                      {t('home_askTitle')}
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                      {t('home_askBody')}{' '}
+                      <Anchor
+                        component={Link}
+                        to={lp('/bantuan-terjemahan')}
+                        size="xs"
+                      >
+                        {t('home_askFeedLink')}
+                      </Anchor>
+                    </Text>
+                  </Stack>
+                </Group>
+                <Anchor
+                  href={PLAY_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  underline="never"
+                  aria-label={t('common_getAppAria')}
+                >
+                  <Image
+                    src="/google_play.webp"
+                    alt={t('common_getOnGooglePlay')}
+                    h={36}
+                    w="auto"
+                    fit="contain"
+                    decoding="async"
+                  />
+                </Anchor>
+              </Group>
+
+              <Divider />
+
+              <Group justify="space-between" align="center" gap="md" wrap="wrap">
+                <Group gap="sm" wrap="nowrap" maw={400} style={{ flex: 1 }}>
+                  <Image
+                    src="/whatsapp.svg"
+                    alt=""
+                    h={22}
+                    w={22}
+                    fit="contain"
+                    decoding="async"
+                    aria-hidden
+                    style={{ flexShrink: 0 }}
+                  />
+                  <Stack gap={2}>
+                    <Text size="sm" fw={600}>
+                      {t('home_waTitle')}
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                      {t('home_waBody')}
+                    </Text>
+                    <Anchor
+                      href={WHATSAPP_GROUP_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      size="xs"
+                      c="green"
+                      fw={500}
+                      w="fit-content"
+                    >
+                      {t('home_waButton')}
+                    </Anchor>
+                  </Stack>
+                </Group>
+                <Anchor
+                  href={WHATSAPP_GROUP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  underline="never"
+                  aria-label={t('home_waButton')}
+                >
+                  <Paper
+                    withBorder
+                    p={6}
+                    radius="sm"
+                    className="whatsapp-group-qr-frame"
+                  >
+                    <Image
+                      src="/whatsapp-group-qr.svg"
+                      alt={t('home_waQrAlt')}
+                      h={112}
+                      w={112}
+                      fit="contain"
+                      decoding="async"
+                    />
+                  </Paper>
+                </Anchor>
+              </Group>
+            </Stack>
+          </Card>
+
           <Text size="xs" c="dimmed">
             {t('home_ctaFaqPrefix')}{' '}
             <Anchor component={Link} to={lp('/faq')}>
@@ -143,50 +257,7 @@ export default function Home() {
             </Anchor>
             {t('home_ctaFaqSuffix')}
           </Text>
-        </Card>
-
-        <Card withBorder padding="lg" radius="md">
-          <Group justify="space-between" align="center" gap="lg" wrap="wrap">
-            <Stack gap={4} maw={520}>
-              <Group gap={6}>
-                <Languages size={18} />
-                <Title order={3} size="h4">
-                  {t('home_askTitle')}
-                </Title>
-              </Group>
-              <Text size="sm" c="dimmed">
-                {t('home_askBody')}
-              </Text>
-            </Stack>
-
-            <Stack gap="xs" align="flex-end">
-              <Anchor
-                href={PLAY_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                underline="never"
-                aria-label={t('common_getAppAria')}
-              >
-                <Image
-                  src="/google_play.webp"
-                  alt={t('common_getOnGooglePlay')}
-                  h={40}
-                  w="auto"
-                  fit="contain"
-                  decoding="async"
-                />
-              </Anchor>
-              <Anchor
-                component={Link}
-                to={lp('/bantuan-terjemahan')}
-                size="xs"
-                c="dimmed"
-              >
-                {t('home_askFeedLink')}
-              </Anchor>
-            </Stack>
-          </Group>
-        </Card>
+        </Stack>
       </Stack>
     </Container>
   );

@@ -12,10 +12,12 @@ import {
 import { Sparkles, ArrowRight, BookOpen } from 'lucide-react';
 import { WordTypeBadge } from './word-type-badge';
 import { formatDateId } from '@/application/utils/formatters';
+import { useLocalePath } from '@/application/i18n/use-locale';
 import type { WordOfTheDay } from '@/domain/entities/word.entity';
 
 export function WordOfTheDayCard({ wordOfDay }: { wordOfDay: WordOfTheDay }) {
   const word = wordOfDay.word;
+  const lp = useLocalePath();
   if (!word) return null;
 
   const firstMeaning = word.meanings[0];
@@ -28,7 +30,7 @@ export function WordOfTheDayCard({ wordOfDay }: { wordOfDay: WordOfTheDay }) {
             <Badge
               size="sm"
               variant="light"
-              color="amber"
+              color="yellow"
               leftSection={<Sparkles size={13} />}
             >
               Kata Hari Ini
@@ -49,7 +51,7 @@ export function WordOfTheDayCard({ wordOfDay }: { wordOfDay: WordOfTheDay }) {
           <Group gap="sm" align="baseline" wrap="wrap">
             <Anchor
               component={Link}
-              to={`/words/${encodeURIComponent(word.lemma)}`}
+              to={lp(`/words/${encodeURIComponent(word.lemma)}`)}
               underline="never"
               c="var(--mantine-color-text)"
             >
@@ -81,7 +83,7 @@ export function WordOfTheDayCard({ wordOfDay }: { wordOfDay: WordOfTheDay }) {
 
         <Button
           component={Link}
-          to={`/words/${encodeURIComponent(word.lemma)}`}
+          to={lp(`/words/${encodeURIComponent(word.lemma)}`)}
           variant="light"
           leftSection={<BookOpen size={16} />}
           rightSection={<ArrowRight size={16} />}

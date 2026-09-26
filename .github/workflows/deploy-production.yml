@@ -35,15 +35,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 10
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -54,10 +54,16 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      # Web belum punya script test; react-router build tidak menjalankan
-      # tsc, jadi typecheck eksplisit di sini.
+      # react-router build tidak menjalankan tsc, jadi typecheck eksplisit
+      # di sini.
       - name: Typecheck
         run: pnpm typecheck
+
+      # Pentest BH-05: CI tidak pernah menjalankan test sama sekali, sehingga
+      # tidak ada yang menangkap regresi cache/header sebelum deploy. `pnpm
+      # test` memakai node:test (tanpa dependency tambahan).
+      - name: Unit test
+        run: pnpm test
 
       # `pnpm build` = react-router build (production adalah mode default,
       # tidak perlu --mode). .env.production TIDAK ter-track - nilai build
@@ -68,8 +74,9 @@ jobs:
         env:
           VITE_API_BASE_URL: https://api.sambasku.com/api/v1
           # Tier cadangan circuit breaker, urut (docs/backlogs/FAILOVER.md).
-          # Menambah host di sini WAJIB diikuti connect-src di public/_headers
-          # dan app/worker.ts, atau browser memblokir panggilan ke tier cadangan.
+          # connect-src CSP tidak lagi ditulis manual: public/_headers
+          # di-generate dari app/edge/security-headers.ts memakai env yang
+          # sama dengan build ini, jadi tidak bisa drift (pentest BH-06).
           VITE_API_BASE_URL_FALLBACKS: https://deno.sambasku.com/api/v1,https://render.sambasku.com/api/v1
           VITE_APP_URL: https://sambasku.com
           VITE_APP_NAME: SambasKu
@@ -119,3 +126,16 @@ jobs:
           if echo "$LIVE_ID_HEADERS" | grep -qi '^x-cached-at:'; then
             echo "::error::x-cached-at bocor ke klien (W-08)"; exit 1
           fi
+
+      # Pentest BH-05: assertion DI ATAS hanya memeriksa header. Header bisa
+      # benar sementara cache-nya mati total - itulah yang terjadi pada
+      # G-01/G-02 (`Set-Cookie` membuat cache.put() no-op diam-diam, semua
+      # respons `x-cache: miss`, tapi tidak ada assertion yang gagal).
+      #
+      # Skrip ini menguji hasil: request kedua harus `hit`, varian path harus
+      # berbagi entry (BH-04), dan path redirect harus `bypass` (BH-08).
+      # Kegagalan = deploy dianggap gagal.
+      - name: Verifikasi perilaku cache live pasca-deploy
+        run: |
+          sleep 10
+          ./scripts/assert-live-behavior.sh https://sambasku.com prod

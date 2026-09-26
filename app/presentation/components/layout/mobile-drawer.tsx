@@ -43,6 +43,7 @@ export function MobileDrawer({
       padding="md"
       size="xs"
       position="right"
+      closeButtonProps={{ 'aria-label': t('nav_closeMenu') }}
     >
       <Stack gap="xs">
         {navItems.map((item) => (

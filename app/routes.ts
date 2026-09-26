@@ -8,7 +8,14 @@ import { type RouteConfig, index, route } from '@react-router/dev/routes';
 export default [
   index('routes/root-redirect.tsx'),
   route('sitemap.xml', 'routes/sitemap[.]xml.ts'),
+  route('sitemap-static.xml', 'routes/sitemap-static[.]xml.ts'),
+  route('sitemap-words/:letter', 'routes/sitemap-words.$letter.ts'),
+  // Kartu OG per kata: di luar pohon locale (segmen statis 'og' menang
+  // dari :locale dalam ranking route).
+  route('og/words/:lemma', 'routes/og.words[.]png.ts'),
   route('robots.txt', 'routes/robots[.]txt.ts'),
+  route('rss.xml', 'routes/rss[.]xml.ts'),
+  route('llms-full.txt', 'routes/llms-full[.]txt.ts'),
   route('reset-password', 'routes/reset-password.tsx'),
 
   // Legacy tanpa locale → 301/302 ke /{defaultLocale}/...
@@ -21,6 +28,7 @@ export default [
     id: 'legacy-bantuan-id',
   }),
   route('faq', 'routes/legacy-redirect.tsx', { id: 'legacy-faq' }),
+  route('api-publik', 'routes/legacy-redirect.tsx', { id: 'legacy-api-publik' }),
   route('privacy-policy', 'routes/legacy-redirect.tsx', { id: 'legacy-privacy' }),
   route('hapus-akun', 'routes/legacy-redirect.tsx', { id: 'legacy-hapus' }),
   route('words', 'routes/legacy-redirect.tsx', { id: 'legacy-words' }),
@@ -34,10 +42,12 @@ export default [
     route('bantuan-terjemahan', 'routes/bantuan-terjemahan.tsx'),
     route('bantuan-terjemahan/:id', 'routes/bantuan-terjemahan.$id.tsx'),
     route('faq', 'routes/faq.tsx'),
+    route('api-publik', 'routes/api-publik.tsx'),
     route('privacy-policy', 'routes/privacy-policy.tsx'),
     route('hapus-akun', 'routes/hapus-akun.tsx'),
     route('words', 'routes/words.tsx'),
     route('words/:lemma', 'routes/words.$lemma.tsx'),
+    route('huruf/:letter', 'routes/huruf.$letter.tsx'),
     route('users/:username', 'routes/users.$username.tsx'),
   ]),
 ] satisfies RouteConfig;

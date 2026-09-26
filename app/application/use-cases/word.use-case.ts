@@ -12,9 +12,13 @@ export interface SearchWordsParams {
 
 export interface ListWordsParams {
   q?: string;
+  /** Satu huruf A-Z: prefix lemma (panel beranda). Beda dari q = contains. */
+  letter?: string;
   limit?: number;
   cursor?: string;
   wordType?: string;
+  /** true = hanya lemma terverifikasi (sitemap). Omit = semua yang tayang. */
+  isVerified?: boolean;
   signal?: AbortSignal;
 }
 
@@ -38,11 +42,36 @@ export async function listWordsAtoZ(
 ): Promise<UnwrappedResult<WordSummary[]>> {
   const query = new URLSearchParams();
   if (params.q) query.set('q', params.q);
+  if (params.letter) query.set('letter', params.letter);
   if (params.limit) query.set('limit', String(params.limit));
   if (params.cursor) query.set('cursor', params.cursor);
   if (params.wordType) query.set('word_type', params.wordType);
+  if (params.isVerified !== undefined) {
+    query.set('is_verified', params.isVerified ? 'true' : 'false');
+  }
 
   return apiClient<WordSummary[]>(`/words?${query.toString()}`, {
+    signal: params.signal,
+  });
+}
+
+/** Item feed GET /words/latest (urut waktu persetujuan). */
+export interface LatestWord {
+  id: string;
+  lemma: string;
+  word_type: 'word' | 'idiom' | 'peribahasa' | 'ungkapan';
+  approved_at: string;
+  sense: string | null;
+}
+
+export async function listLatestWords(
+  params: { limit?: number; cursor?: string; signal?: AbortSignal } = {},
+): Promise<UnwrappedResult<LatestWord[]>> {
+  const query = new URLSearchParams();
+  if (params.limit) query.set('limit', String(params.limit));
+  if (params.cursor) query.set('cursor', params.cursor);
+
+  return apiClient<LatestWord[]>(`/words/latest?${query.toString()}`, {
     signal: params.signal,
   });
 }

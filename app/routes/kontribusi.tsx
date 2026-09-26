@@ -48,6 +48,11 @@ import {
 } from '../domain/usage-labels';
 import { UsageLabelChips } from '../presentation/components/word/usage-label-chips';
 import {
+  ContributionImagesField,
+  type ContributionImageSlot,
+} from '../presentation/components/media-explorer/contribution-images-field';
+import { isAllowedDisplayImageUrl } from '../presentation/utils/display-image-url';
+import {
   listDialects,
   listLanguages,
   listWordClasses,
@@ -87,11 +92,79 @@ interface MaknaForm {
   contoh: string;
 }
 
-const emptyMakna: MaknaForm = { wordClassId: '', definition: '', padanan: '', contoh: '' };
+const emptyMakna: MaknaForm = {
+  wordClassId: '',
+  definition: '',
+  padanan: '',
+  contoh: '',
+};
 
 // Kode kelas kata KBBI lebih pendek dari DB (a vs adj, p vs part) -
 // alias + fallback nama label agar auto-fill tetap jalan.
 const KBBI_CODE_ALIASES: Record<string, string> = { a: 'adj', p: 'part' };
+
+const EMPTY_KBBI: KbbiSuggestion[] = [];
+const EMPTY_WORDS: WordSummary[] = [];
+
+function searchSimilarLemmas(q: string): Promise<WordSummary[]> {
+  return searchWords({ q, searchIn: 'lemma', limit: 5 }).then(
+    (res) => res.data,
+  );
+}
+
+/**
+ * Debounce pencarian. Hasil pendek / belum siap dihitung saat render,
+ * setState hanya di callback timeout - bukan sinkron di badan effect.
+ */
+function useDebouncedQuery<T>(
+  rawQuery: string,
+  minLength: number,
+  delayMs: number,
+  lookup: (q: string) => Promise<T>,
+  empty: T,
+  hiddenQuery: string | null = null,
+): { data: T; loading: boolean; error: boolean } {
+  const [settled, setSettled] = useState<{
+    q: string;
+    data: T;
+    error: boolean;
+  } | null>(null);
+  const q = rawQuery.trim();
+  const active = q.length >= minLength && hiddenQuery !== q;
+
+  useEffect(() => {
+    if (!active) return;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      lookup(q).then(
+        (data) => {
+          if (!cancelled) setSettled({ q, data, error: false });
+        },
+        () => {
+          if (!cancelled) setSettled({ q, data: empty, error: true });
+        },
+      );
+    }, delayMs);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [active, q, delayMs, empty, lookup]);
+
+  if (!active) return { data: empty, loading: false, error: false };
+  if (settled?.q !== q) {
+    const stale =
+      settled && !settled.error && settled.q !== hiddenQuery
+        ? settled.data
+        : empty;
+    return { data: stale, loading: true, error: false };
+  }
+  return {
+    data: settled.error ? empty : settled.data,
+    loading: false,
+    error: settled.error,
+  };
+}
 
 function matchWordClass(
   s: KbbiSuggestion,
@@ -101,11 +174,12 @@ function matchWordClass(
   return (
     (code ? wordClasses.find((w) => w.code === code) : undefined) ??
     (s.word_class_label
-      ? wordClasses.find((w) => w.name.toLowerCase() === s.word_class_label!.toLowerCase())
+      ? wordClasses.find(
+          (w) => w.name.toLowerCase() === s.word_class_label!.toLowerCase(),
+        )
       : undefined)
   );
 }
-
 
 /**
  * Modal pencarian KBBI - padanan web untuk bottom sheet (mobile) dan
@@ -122,39 +196,6 @@ function KbbiLookupModal({
   onSelect: (s: KbbiSuggestion) => void;
   initialQuery?: string;
 }) {
-  const [query, setQuery] = useState(initialQuery);
-  const [results, setResults] = useState<KbbiSuggestion[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
-
-  // useState(initialQuery) cuma jalan sekali - sync ulang tiap modal dibuka
-  useEffect(() => {
-    if (opened) setQuery(initialQuery);
-  }, [opened, initialQuery]);
-
-  useEffect(() => {
-    if (!opened) return;
-    const q = query.trim();
-    if (q.length < 2) {
-      setResults([]);
-      setError(false);
-      return;
-    }
-    setLoading(true);
-    setError(false);
-    const timer = setTimeout(async () => {
-      try {
-        setResults(await lookupKbbi(q));
-      } catch {
-        setError(true);
-        setResults([]);
-      } finally {
-        setLoading(false);
-      }
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [query, opened]);
-
   return (
     <Modal
       opened={opened}
@@ -163,65 +204,101 @@ function KbbiLookupModal({
       size="lg"
       centered
     >
-      <Stack gap="sm">
-        <TextInput
-          data-autofocus
-          placeholder="Kata bahasa Indonesia, mis. makan"
-          value={query}
-          onChange={(e) => setQuery(e.currentTarget.value)}
-          leftSection={<BookOpenText size={16} />}
+      {opened ? (
+        <KbbiLookupFields
+          initialQuery={initialQuery}
+          onClose={onClose}
+          onSelect={onSelect}
         />
+      ) : null}
+    </Modal>
+  );
+}
 
-        {loading && (
-          <Stack gap={4}>
-            <Skeleton height={44} radius="sm" />
-            <Skeleton height={44} radius="sm" />
-            <Skeleton height={44} radius="sm" />
-          </Stack>
-        )}
+function KbbiLookupFields({
+  initialQuery,
+  onClose,
+  onSelect,
+}: {
+  initialQuery: string;
+  onClose: () => void;
+  onSelect: (s: KbbiSuggestion) => void;
+}) {
+  // Mount ulang tiap modal dibuka, jadi query awal selalu segar.
+  const [query, setQuery] = useState(initialQuery);
+  const {
+    data: results,
+    loading,
+    error,
+  } = useDebouncedQuery(query, 2, 400, lookupKbbi, EMPTY_KBBI);
 
-        {error && (
-          <Text size="sm" c="red">
-            Gagal menghubungi KBBI. Coba lagi sebentar.
-          </Text>
-        )}
+  return (
+    <Stack gap="sm">
+      <TextInput
+        data-autofocus
+        placeholder="Kata bahasa Indonesia, mis. makan"
+        value={query}
+        onChange={(e) => setQuery(e.currentTarget.value)}
+        leftSection={<BookOpenText size={16} />}
+      />
 
-        {!loading && !error && query.trim().length >= 2 && results.length === 0 && (
+      {loading && (
+        <Stack gap={4}>
+          <Skeleton height={44} radius="sm" />
+          <Skeleton height={44} radius="sm" />
+          <Skeleton height={44} radius="sm" />
+        </Stack>
+      )}
+
+      {error && (
+        <Text size="sm" c="red">
+          Gagal menghubungi KBBI. Coba lagi sebentar.
+        </Text>
+      )}
+
+      {!loading &&
+        !error &&
+        query.trim().length >= 2 &&
+        results.length === 0 && (
           <Text size="sm" c="dimmed">
             Tidak ditemukan di KBBI. Isi definisi secara manual.
           </Text>
         )}
 
-        <Stack gap={4}>
-          {results.map((s) => (
-            <Paper
-              key={s.id}
-              component="button"
-              type="button"
-              withBorder
-              radius="sm"
-              p="sm"
-              onClick={() => {
-                onSelect(s);
-                onClose();
-              }}
-              style={{ textAlign: 'left', cursor: 'pointer' }}
-            >
-              <Group gap="xs" align="baseline" wrap="nowrap">
-                <Text size="xs" fw={600} c="dimmed" style={{ whiteSpace: 'nowrap' }}>
-                  {s.word_class_label ?? '-'}
-                </Text>
-                <Text size="sm" lineClamp={2}>
-                  {s.definition}
-                </Text>
-              </Group>
-            </Paper>
-          ))}
-        </Stack>
-
-        <Box />
+      <Stack gap={4}>
+        {results.map((s) => (
+          <Paper
+            key={s.id}
+            component="button"
+            type="button"
+            withBorder
+            radius="sm"
+            p="sm"
+            onClick={() => {
+              onSelect(s);
+              onClose();
+            }}
+            style={{ textAlign: 'left', cursor: 'pointer' }}
+          >
+            <Group gap="xs" align="baseline" wrap="nowrap">
+              <Text
+                size="xs"
+                fw={600}
+                c="dimmed"
+                style={{ whiteSpace: 'nowrap' }}
+              >
+                {s.word_class_label ?? '-'}
+              </Text>
+              <Text size="sm" lineClamp={2}>
+                {s.definition}
+              </Text>
+            </Group>
+          </Paper>
+        ))}
       </Stack>
-    </Modal>
+
+      <Box />
+    </Stack>
   );
 }
 
@@ -243,30 +320,17 @@ function MaknaCard({
   onRemove: () => void;
   canRemove: boolean;
 }) {
-  const [kbbi, setKbbi] = useState<KbbiSuggestion[]>([]);
-  const [kbbiLoading, setKbbiLoading] = useState(false);
   const [kbbiOpen, setKbbiOpen] = useState(false);
-
-  // Trigger KBBI: user isi padanan Indonesia → cari definisi KBBI-nya
-  // untuk prefill. Best-effort; gagal = diam (tidak mengganggu form).
-  useEffect(() => {
-    const q = value.padanan.trim();
-    if (q.length < 2) {
-      setKbbi([]);
-      return;
-    }
-    setKbbiLoading(true);
-    const timer = setTimeout(async () => {
-      try {
-        setKbbi(await lookupKbbi(q));
-      } catch {
-        setKbbi([]);
-      } finally {
-        setKbbiLoading(false);
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [value.padanan]);
+  // Setelah user memilih saran, sembunyikan daftar untuk query yang sama.
+  const [dismissedQ, setDismissedQ] = useState<string | null>(null);
+  const { data: kbbi, loading: kbbiLoading } = useDebouncedQuery(
+    value.padanan,
+    2,
+    500,
+    lookupKbbi,
+    EMPTY_KBBI,
+    dismissedQ,
+  );
 
   function applySuggestion(s: KbbiSuggestion) {
     const wc = matchWordClass(s, wordClasses);
@@ -275,7 +339,7 @@ function MaknaCard({
       wordClassId: wc?.id ?? value.wordClassId,
       definition: s.definition,
     });
-    setKbbi([]);
+    setDismissedQ(value.padanan.trim());
   }
 
   return (
@@ -286,7 +350,12 @@ function MaknaCard({
         </Text>
         {canRemove && (
           <Tooltip label="Hapus makna ini">
-            <ActionIcon color="red" variant="subtle" onClick={onRemove} aria-label="Hapus makna">
+            <ActionIcon
+              color="red"
+              variant="subtle"
+              onClick={onRemove}
+              aria-label="Hapus makna"
+            >
               <Trash2 size={16} />
             </ActionIcon>
           </Tooltip>
@@ -313,7 +382,9 @@ function MaknaCard({
             label="Terjemahan Indonesia"
             placeholder="mis. makan"
             value={value.padanan}
-            onChange={(e) => onChange({ ...value, padanan: e.currentTarget.value })}
+            onChange={(e) =>
+              onChange({ ...value, padanan: e.currentTarget.value })
+            }
             style={{ minWidth: 180 }}
             rightSectionWidth={44}
             rightSection={
@@ -396,7 +467,9 @@ function MaknaCard({
           required
           minRows={2}
           value={value.definition}
-          onChange={(e) => onChange({ ...value, definition: e.currentTarget.value })}
+          onChange={(e) =>
+            onChange({ ...value, definition: e.currentTarget.value })
+          }
         />
 
         <Textarea
@@ -406,7 +479,9 @@ function MaknaCard({
           autosize
           minRows={2}
           value={value.contoh}
-          onChange={(e) => onChange({ ...value, contoh: e.currentTarget.value })}
+          onChange={(e) =>
+            onChange({ ...value, contoh: e.currentTarget.value })
+          }
         />
       </Stack>
     </Paper>
@@ -428,7 +503,8 @@ export default function KontribusiPage() {
   const [advanced, setAdvanced] = useState(false);
   const [standardPadanan, setStandardPadanan] = useState('');
   const [standardDefinition, setStandardDefinition] = useState('');
-  const [standardWordClassId, setStandardWordClassId] = useState(umumWordClassId);
+  const [standardWordClassId, setStandardWordClassId] =
+    useState(umumWordClassId);
   const [standardKbbiOpen, setStandardKbbiOpen] = useState(false);
   const [usageLabels, setUsageLabels] = useState<UsageLabel[]>([]);
   const [maknaList, setMaknaList] = useState<MaknaForm[]>([
@@ -437,6 +513,7 @@ export default function KontribusiPage() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [images, setImages] = useState<ContributionImageSlot[]>([]);
 
   const usageLabelsConflict = hasConflictingUsageLabels(usageLabels);
 
@@ -444,7 +521,10 @@ export default function KontribusiPage() {
     const turningOn = nextAdvanced && !advanced;
     if (turningOn) {
       setMaknaList((list) => {
-        const first = list[0] ?? { ...emptyMakna, wordClassId: umumWordClassId };
+        const first = list[0] ?? {
+          ...emptyMakna,
+          wordClassId: umumWordClassId,
+        };
         // Jangan timpa makna yang sudah diisi user di mode Lengkap.
         const alreadyFilled =
           first.padanan.trim().length > 0 || first.definition.trim().length > 0;
@@ -453,7 +533,8 @@ export default function KontribusiPage() {
           ...first,
           padanan: standardPadanan.trim() || first.padanan,
           definition: standardDefinition.trim() || first.definition,
-          wordClassId: standardWordClassId || first.wordClassId || umumWordClassId,
+          wordClassId:
+            standardWordClassId || first.wordClassId || umumWordClassId,
         };
         return list.length ? [seeded, ...list.slice(1)] : [seeded];
       });
@@ -470,23 +551,13 @@ export default function KontribusiPage() {
   // ==== Cek duplikat live (debounce 400ms) ====
   // Lemma yang sudah tayang → tawarkan lihat halamannya / ajukan makna
   // baru (verifikator menggabungkan, bukan menolak).
-  const [similar, setSimilar] = useState<WordSummary[]>([]);
-  useEffect(() => {
-    const q = lemma.trim();
-    if (q.length < 2) {
-      setSimilar([]);
-      return;
-    }
-    const timer = setTimeout(async () => {
-      try {
-        const res = await searchWords({ q, searchIn: 'lemma', limit: 5 });
-        setSimilar(res.data);
-      } catch {
-        setSimilar([]);
-      }
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [lemma]);
+  const { data: similar } = useDebouncedQuery(
+    lemma,
+    2,
+    400,
+    searchSimilarLemmas,
+    EMPTY_WORDS,
+  );
 
   const exact = similar.find(
     (w) => w.lemma.trim().toLowerCase() === lemma.trim().toLowerCase(),
@@ -509,6 +580,20 @@ export default function KontribusiPage() {
         setError('Isi terjemahan bahasa Indonesia.');
         return;
       }
+    }
+    // Guard terakhir sebelum POST. `ContributionImagesField` sudah menolak
+    // URL di luar allowlist saat dipilih, tapi state React bukan batas
+    // keamanan - payload ini bisa diubah dari devtools. Tolak apa pun yang
+    // tidak lolos, lalu beri tahu kontributor daripada diam-diam
+    // kehilangan fotonya.
+    const safeImages = images.filter((img) =>
+      isAllowedDisplayImageUrl(img.url),
+    );
+    if (safeImages.length !== images.length) {
+      setError(
+        'Sebagian foto ditolak karena berasal dari sumber di luar daftar foto stock yang diizinkan. Hapus foto tersebut lalu kirim ulang.',
+      );
+      return;
     }
     setSubmitting(true);
     try {
@@ -569,6 +654,17 @@ export default function KontribusiPage() {
           word_type: 'word',
           usage_labels: usageLabels,
           meanings,
+          ...(safeImages.length > 0
+            ? {
+                images: safeImages.map((img) => ({
+                  url: img.url,
+                  provider: img.provider,
+                  provider_file_id: img.provider_file_id,
+                  alt_text: img.alt_text.trim() || undefined,
+                  is_primary: img.is_primary,
+                })),
+              }
+            : {}),
         }),
       });
       setSuccess(word);
@@ -578,11 +674,14 @@ export default function KontribusiPage() {
       setStandardDefinition('');
       setStandardWordClassId(umumWordClassId);
       setMaknaList([{ ...emptyMakna, wordClassId: umumWordClassId }]);
+      setImages([]);
     } catch (err) {
       if (err instanceof AppError && err.details?.length) {
         setError(err.details.map((d) => d.message).join('. '));
       } else {
-        setError(err instanceof Error ? err.message : 'Gagal mengirim kontribusi.');
+        setError(
+          err instanceof Error ? err.message : 'Gagal mengirim kontribusi.',
+        );
       }
     } finally {
       setSubmitting(false);
@@ -617,12 +716,13 @@ export default function KontribusiPage() {
                   &quot;{success}&quot; dikirim sebagai tamu
                 </Text>
                 <Text size="sm" c="dimmed" lh={1.55}>
-                  Kata belum tayang. Tim akan memeriksanya dulu, lalu menampilkannya di{' '}
+                  Kata belum tayang. Tim akan memeriksanya dulu, lalu
+                  menampilkannya di{' '}
                   <Anchor component={Link} to={lp('/words')} size="sm">
                     daftar kata
                   </Anchor>
-                  . Kalau kata yang sama sudah ada, makna baru akan digabungkan ke
-                  halamannya.
+                  . Kalau kata yang sama sudah ada, makna baru akan digabungkan
+                  ke halamannya.
                 </Text>
               </Stack>
             </Group>
@@ -676,9 +776,8 @@ export default function KontribusiPage() {
                   >
                     Lihat halaman &quot;{exact.lemma}&quot;
                   </Anchor>
-                  . Kamu tetap bisa mengajukan{' '}
-                  <b>makna baru</b> untuk kata ini - verifikator akan
-                  menggabungkannya, bukan menolak.
+                  . Kamu tetap bisa mengajukan <b>makna baru</b> untuk kata ini
+                  - verifikator akan menggabungkannya, bukan menolak.
                 </Alert>
               )}
 
@@ -711,7 +810,11 @@ export default function KontribusiPage() {
                     onChange={(e) => setStandardPadanan(e.currentTarget.value)}
                     rightSectionWidth={44}
                     rightSection={
-                      <Tooltip label="Cari definisi di KBBI" position="top" withArrow>
+                      <Tooltip
+                        label="Cari definisi di KBBI"
+                        position="top"
+                        withArrow
+                      >
                         <ActionIcon
                           variant="subtle"
                           onClick={() => setStandardKbbiOpen(true)}
@@ -741,7 +844,12 @@ export default function KontribusiPage() {
                       <Text size="sm" fw={500}>
                         Penjelasan arti
                       </Text>
-                      <Paper withBorder radius="sm" p="sm" bg="var(--mantine-color-body)">
+                      <Paper
+                        withBorder
+                        radius="sm"
+                        p="sm"
+                        bg="var(--mantine-color-body)"
+                      >
                         <Text size="sm">{standardDefinition}</Text>
                       </Paper>
                       <Text size="xs" c="dimmed">
@@ -757,7 +865,8 @@ export default function KontribusiPage() {
                   Gaya bahasa & peringatan
                 </Text>
                 <Text size="xs" c="dimmed">
-                  Opsional. Ketuk yang sesuai — bantu pembaca paham gaya dan sensitivitas isi.
+                  Opsional. Ketuk yang sesuai - bantu pembaca paham gaya dan
+                  sensitivitas isi.
                 </Text>
                 <UsageLabelChips
                   caption="Gaya bahasa"
@@ -778,6 +887,9 @@ export default function KontribusiPage() {
                 )}
               </Stack>
 
+              <Divider label="Gambar" labelPosition="center" />
+              <ContributionImagesField images={images} onChange={setImages} />
+
               {advanced && (
                 <>
                   <Divider label="Makna" labelPosition="center" />
@@ -790,9 +902,13 @@ export default function KontribusiPage() {
                       wordClassOptions={wordClassOptions}
                       wordClasses={wordClasses}
                       onChange={(v) =>
-                        setMaknaList((list) => list.map((x, j) => (j === i ? v : x)))
+                        setMaknaList((list) =>
+                          list.map((x, j) => (j === i ? v : x)),
+                        )
                       }
-                      onRemove={() => setMaknaList((list) => list.filter((_, j) => j !== i))}
+                      onRemove={() =>
+                        setMaknaList((list) => list.filter((_, j) => j !== i))
+                      }
                       canRemove={maknaList.length > 1}
                     />
                   ))}

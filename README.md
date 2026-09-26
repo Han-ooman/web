@@ -28,8 +28,8 @@ Kontrak response mengikuti `docs/api/*`.
 | Mode | URL | SEO |
 | --- | --- | --- |
 | development | `http://localhost:5173` | off |
-| staging | `https://sambasku-web-staging.iamutaki.com` | off (`noindex`) |
-| production | `https://sambasku.iamutaki.com` | on |
+| staging | `https://sambasku-web-staging.iamutaki.com` (DNS Cloudflare) | off (`noindex`) |
+| production | `https://sambasku.com` | on |
 
 Nilai `VITE_*` di-inline saat build dari `.env.development` /
 `.env.staging` / `.env.production`. Tidak ada secret di bundle.

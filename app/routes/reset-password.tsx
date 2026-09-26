@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, useSyncExternalStore, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import {
   Button,
@@ -20,6 +20,9 @@ export function meta() {
     title: 'Atur password baru',
     description: 'Reset password akun SambasKu dengan kode atau tautan dari email.',
     path: '/reset-password',
+    // Deeplink, bukan halaman kamus. Tanpa noindex, hreflang menunjuk
+    // /{locale}/reset-password yang 404.
+    noindexAlways: true,
   });
 }
 
@@ -38,18 +41,24 @@ function extractToken(raw: string): string {
   return trimmed;
 }
 
+function subscribeHash(onStoreChange: () => void) {
+  window.addEventListener('hashchange', onStoreChange);
+  return () => window.removeEventListener('hashchange', onStoreChange);
+}
+
+function readHashToken() {
+  return new URLSearchParams(window.location.hash.replace(/^#/, '')).get('token') ?? '';
+}
+
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   // Link email baru memakai fragment #token=... yang tidak pernah dikirim ke
   // server (bebas dari log akses/bookmark server-side). Fallback ?token=
-  // untuk link email lama. Pentest W-07.
+  // untuk link email lama. Pentest W-07. Snapshot server kosong supaya
+  // hidrasi cocok; nilai hash baru dibaca di client.
   const tokenFromQuery = searchParams.get('token') ?? '';
-  const [hashToken, setHashToken] = useState('');
-  useEffect(() => {
-    const fromHash = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('token');
-    if (fromHash) setHashToken(fromHash);
-  }, []);
+  const hashToken = useSyncExternalStore(subscribeHash, readHashToken, () => '');
   const tokenFromLink = hashToken || tokenFromQuery;
   const [email, setEmail] = useState(searchParams.get('email') ?? '');
   const [code, setCode] = useState('');
@@ -94,7 +103,7 @@ export default function ResetPasswordPage() {
     <Container size="xs" py={48}>
       <Card withBorder padding="lg" radius="md" shadow="none">
         <Stack gap="xs" mb="md">
-          <Title order={3}>
+          <Title order={1} size="h3">
             {done ? 'Password berhasil direset' : 'Atur password baru'}
           </Title>
           <Text size="sm" c="dimmed">

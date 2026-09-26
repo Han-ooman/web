@@ -41,6 +41,15 @@ export const PROMINENT_USAGE_LABELS = new Set<UsageLabel>([
   'diskriminatif',
 ]);
 
+/**
+ * Label yang disembunyikan dari browsing A-Z publik (GET /words tanpa q).
+ * Sinkron API `BROWSE_EXCLUDED_USAGE_LABELS` - filter di server, bukan client.
+ */
+export const BROWSE_EXCLUDED_USAGE_LABELS = [
+  'kasar',
+  'diskriminatif',
+] as const satisfies readonly UsageLabel[];
+
 export function label(code: string): string {
   return USAGE_LABEL_LABELS[code as UsageLabel] ?? code;
 }

@@ -6,7 +6,7 @@ import {
 } from '@/domain/usage-labels';
 
 /**
- * Multi-select chip untuk usage_labels — padanan web dari chip mobile
+ * Multi-select chip untuk usage_labels - padanan web dari chip mobile
  * (bukan Checkbox form yang terasa kasar di UI awam).
  */
 export function UsageLabelChips({

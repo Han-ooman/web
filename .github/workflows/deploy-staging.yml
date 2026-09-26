@@ -33,15 +33,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 10
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -52,10 +52,16 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      # Web belum punya script test; react-router build tidak menjalankan
-      # tsc, jadi typecheck eksplisit di sini.
+      # react-router build tidak menjalankan tsc, jadi typecheck eksplisit
+      # di sini.
       - name: Typecheck
         run: pnpm typecheck
+
+      # Pentest BH-05: CI tidak pernah menjalankan test sama sekali, sehingga
+      # tidak ada yang menangkap regresi cache/header sebelum deploy. `pnpm
+      # test` memakai node:test (tanpa dependency tambahan).
+      - name: Unit test
+        run: pnpm test
 
       # .env.staging TIDAK ter-track (gitignore) - nilai build di-inject
       # langsung di sini; Vite memberi process env prioritas tertinggi.
@@ -75,3 +81,15 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --config dist/server/wrangler.json --name sambasku-web-staging
+
+      # Pentest BH-01: `staging` sempat lint-red BERTAHAN, jadi tidak ada yang
+      # pernah deploy ke sini - dan ini persis sebabnya remediasi G-01/G-02
+      # menggantung. Karena staging adalah tujuan deploy pertama, ia wajib punya
+      # gate yang sama dengan produksi.
+      #
+      # BH-05: yang diuji adalah PERILAKU cache, bukan hanya header. Request
+      # kedua harus `hit` - itulah yang gagal diam-diam pada G-01/G-02.
+      - name: Verifikasi perilaku cache live pasca-deploy
+        run: |
+          sleep 10
+          ./scripts/assert-live-behavior.sh https://sambasku-web-staging.iamutaki.com staging
