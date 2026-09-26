@@ -33,6 +33,8 @@ export function meta({ data, params }: Route.MetaArgs) {
     description: `Profil publik ${display} di kamus digital bahasa Sambas.`,
     path: localePath(locale, `/users/${encodeURIComponent(username)}`),
     locale,
+    // Thin UGC, tidak di sitemap - jangan diindeks.
+    noindexAlways: true,
   });
 }
 

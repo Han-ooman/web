@@ -35,6 +35,15 @@ export function Footer() {
           </Anchor>
           <Anchor
             component={Link}
+            to={lp('/api-publik')}
+            size="xs"
+            c="dimmed"
+            py={4}
+          >
+            {t('nav_apiPublik')}
+          </Anchor>
+          <Anchor
+            component={Link}
             to={lp('/privacy-policy')}
             size="xs"
             c="dimmed"

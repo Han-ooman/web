@@ -90,6 +90,9 @@ export function isSitemapPath(pathname: string): boolean {
 export const RSS_PATH = '/rss.xml';
 const RSS_FRESH_S = 3600;
 
+export const LLMS_FULL_PATH = '/llms-full.txt';
+const LLMS_FULL_FRESH_S = 86400;
+
 /// Kartu OG per kata: mahal dirender (resvg) dan isinya stabil per deploy,
 /// jadi jendela segar sehari penuh. Karakter segmen sama dengan guard route.
 const OG_WORDS_RE = /^\/og\/words\/[A-Za-z0-9%._~-]{1,100}$/;
@@ -103,6 +106,7 @@ export function freshSeconds(pathname: string): number {
   if (isSitemapPath(pathname)) return SITEMAP_FRESH_S;
   const canonical = canonicalCachePath(pathname);
   if (canonical === RSS_PATH) return RSS_FRESH_S;
+  if (canonical === LLMS_FULL_PATH) return LLMS_FULL_FRESH_S;
   if (isOgImagePath(canonical)) return OG_FRESH_S;
   return FRESH_S;
 }
@@ -142,6 +146,7 @@ export function isCacheableRequest(
   if (search !== '') return false;
   if (isSitemapPath(canonical)) return true;
   if (canonical === RSS_PATH) return true;
+  if (canonical === LLMS_FULL_PATH) return true;
   if (isOgImagePath(canonical)) return true;
   if (locale === null) return false;
   return bare === '/' || bare.startsWith('/words/') || HURUF_PATH_RE.test(bare);

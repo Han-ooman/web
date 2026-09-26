@@ -390,3 +390,32 @@ export function buildWordJsonLd(word: WordDetail, localeInput?: string) {
     '@graph': [definedTerm, breadcrumb],
   };
 }
+
+/** JSON-LD halaman dokumentasi API publik. */
+export function buildApiPublikJsonLd(localeInput?: string) {
+  const locale = resolveLocale(localeInput);
+  const t = getFixedT(locale);
+  const pageUrl = `${env.appUrl}${localePath(locale, '/api-publik')}`;
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'TechArticle',
+    '@id': `${pageUrl}#article`,
+    headline: t('seo_apiPublikTitle'),
+    description: t('seo_apiPublikDescription'),
+    url: pageUrl,
+    inLanguage: locale,
+    about: {
+      '@type': 'WebAPI',
+      name: 'SambasKu Words API',
+      description: t('seo_apiPublikDescription'),
+      documentation: pageUrl,
+      url: 'https://api.sambasku.com/api/v1',
+    },
+    isPartOf: {
+      '@type': 'WebSite',
+      name: t('seo_websiteName'),
+      url: `${env.appUrl}${localePath(locale, '/')}`,
+    },
+  };
+}

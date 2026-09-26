@@ -12,6 +12,8 @@
 ## Data
 - [RSS kata terbaru](https://sambasku.com/rss.xml): 20 kata yang baru disetujui
 - [Sitemap](https://sambasku.com/sitemap.xml): daftar halaman yang boleh diindeks (satu urlset, lemma terverifikasi)
+- [API publik](https://sambasku.com/id/api-publik): dokumentasi baca kamus - `GET /api/v1/words/search` dan `GET /api/v1/words/lemma/:lemma` (plus daftar A-Z dan detail by id)
+- [Korpus terverifikasi](https://sambasku.com/llms-full.txt): dump Markdown lemma + gloss untuk agen
 
 ## Kutipan konten
 Konten kata (lemma, makna, terjemahan, contoh) bebas dikutip dengan tautan ke halaman katanya. Bahasa antarmuka: Bahasa Indonesia (`/id/...`) dan Bahasa Sambas (`/id-SBS/...`).

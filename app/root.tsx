@@ -66,6 +66,12 @@ export const links: Route.LinksFunction = () => [
     title: 'llms.txt',
     href: '/llms.txt',
   },
+  {
+    rel: 'alternate',
+    type: 'text/plain',
+    title: 'llms-full.txt',
+    href: '/llms-full.txt',
+  },
   { rel: 'manifest', href: '/manifest.webmanifest' },
 ];
 

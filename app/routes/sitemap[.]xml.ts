@@ -81,6 +81,7 @@ export async function loader() {
     ),
     { bare: '/bantuan-terjemahan', priority: '0.7', changefreq: 'daily' },
     { bare: '/faq', priority: '0.8', changefreq: 'monthly' },
+    { bare: '/api-publik', priority: '0.6', changefreq: 'monthly' },
     { bare: '/privacy-policy', priority: '0.5', changefreq: 'yearly' },
     { bare: '/hapus-akun', priority: '0.4', changefreq: 'yearly' },
     ...words.map(

@@ -54,6 +54,8 @@ export function meta({ data, params }: Route.MetaArgs) {
     image: ogImage,
     type: 'article',
     locale,
+    // Thread tidak di sitemap - temukan lewat daftar, bukan SERP.
+    noindexAlways: true,
   });
 }
 
