@@ -1,11 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import {
-  SITEMAP_LETTERS,
-  buildSitemapIndexXml,
-  buildUrlsetXml,
-  xmlEscape,
-} from './sitemap.ts';
+import { buildUrlsetXml, xmlEscape } from './sitemap.ts';
 
 const APP_URL = 'https://sambasku.com';
 
@@ -42,21 +37,16 @@ describe('buildUrlsetXml', () => {
     assert.ok(!xml.includes('/words/a&b<c<'));
     assert.ok(xml.includes('&amp;b&lt;c'));
   });
-});
 
-describe('buildSitemapIndexXml', () => {
-  it('memuat 1 anak statis + 26 anak huruf dengan URL absolut', () => {
-    const xml = buildSitemapIndexXml(APP_URL);
-    assert.equal((xml.match(/<sitemap>/g) ?? []).length, 27);
-    assert.ok(xml.includes(`<loc>${APP_URL}/sitemap-static.xml</loc>`));
-    assert.ok(xml.includes(`<loc>${APP_URL}/sitemap-words/a</loc>`));
-    assert.ok(xml.includes(`<loc>${APP_URL}/sitemap-words/z</loc>`));
-    assert.ok(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>'));
-  });
+  it('lastmod hanya ditulis bila ada tanggal', () => {
+    const withDate = buildUrlsetXml(APP_URL, [
+      { bare: '/words/capal', priority: '0.7', changefreq: 'weekly', lastmod: '2026-09-01' },
+    ]);
+    assert.ok(withDate.includes('<lastmod>2026-09-01</lastmod>'));
 
-  it('daftar huruf lengkap dan berurutan', () => {
-    assert.deepEqual(SITEMAP_LETTERS[0], 'a');
-    assert.deepEqual(SITEMAP_LETTERS[25], 'z');
-    assert.equal(SITEMAP_LETTERS.length, 26);
+    const without = buildUrlsetXml(APP_URL, [
+      { bare: '/faq', priority: '0.8', changefreq: 'monthly' },
+    ]);
+    assert.equal(without.includes('<lastmod>'), false);
   });
 });

@@ -17,6 +17,8 @@ export interface ListWordsParams {
   limit?: number;
   cursor?: string;
   wordType?: string;
+  /** true = hanya lemma terverifikasi (sitemap). Omit = semua yang tayang. */
+  isVerified?: boolean;
   signal?: AbortSignal;
 }
 
@@ -44,6 +46,9 @@ export async function listWordsAtoZ(
   if (params.limit) query.set('limit', String(params.limit));
   if (params.cursor) query.set('cursor', params.cursor);
   if (params.wordType) query.set('word_type', params.wordType);
+  if (params.isVerified !== undefined) {
+    query.set('is_verified', params.isVerified ? 'true' : 'false');
+  }
 
   return apiClient<WordSummary[]>(`/words?${query.toString()}`, {
     signal: params.signal,

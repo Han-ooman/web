@@ -178,14 +178,9 @@ export function buildHomeJsonLd(localeInput?: string) {
         description: t('seo_homeDescription'),
         inLanguage: locale,
         publisher: { '@id': organizationId },
-        potentialAction: {
-          '@type': 'SearchAction',
-          target: {
-            '@type': 'EntryPoint',
-            urlTemplate: `${env.appUrl}${localePath(locale, '/search')}?q={search_term_string}`,
-          },
-          'query-input': 'required name=search_term_string',
-        },
+        // Tanpa SearchAction: /search selalu noindex (thin content), jadi
+        // menunjuknya dari beranda hanya memberi sinyal ke URL yang tidak
+        // boleh diindeks.
       },
       {
         '@type': 'Organization',

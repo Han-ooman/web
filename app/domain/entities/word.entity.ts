@@ -14,6 +14,8 @@ export interface WordSummary {
   status: WordStatus;
   is_verified: boolean;
   matched_translation?: string | null;
+  /** ISO dari GET /words. Sitemap memakai ini sebagai lastmod. */
+  updated_at?: string | null;
 }
 
 export interface WordClass {

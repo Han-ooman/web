@@ -172,7 +172,7 @@
   "seo_homeDescription": "Kamus Sambas digital terbuka: cari kosakata Melayu Sambas, makna, terjemahan Indonesia, contoh kalimat, dan lafal. Jelajahi daftar A-Z atau kontribusi kata baru.",
   "seo_faqTitle": "FAQ - Tentang SambasKu",
   "seo_faqDescription": "Apa itu SambasKu dan Kamus Sambas, mengapa dibuat untuk pelestarian bahasa Melayu Sambas, cara kontribusi, status Terverifikasi, dan aplikasi Android.",
-  "seo_wordsDescription": "Telusuri daftar kata Kamus Sambas dari A sampai Z. Setiap entri memuat makna, terjemahan Indonesia, dan telah diterbitkan serta diverifikasi.",
+  "seo_wordsDescription": "Telusuri daftar kata Kamus Sambas dari A sampai Z. Setiap entri memuat makna dan terjemahan Indonesia. Yang belum diverifikasi tetap bisa dibuka.",
   "seo_searchTitle": "Pencarian {{query}}",
   "seo_searchDescription": "Hasil pencarian kosakata {{query}} dalam Kamus Digital Sambas-Indonesia.",
   "seo_searchQueryFallback": "Kosakata",

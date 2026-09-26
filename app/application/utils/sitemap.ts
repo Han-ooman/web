@@ -2,9 +2,8 @@
  * Pembangun XML sitemap (pure, tanpa import env) supaya bisa diuji
  * `node --test` seperti edge/cache-policy.
  *
- * Struktur: /sitemap.xml adalah sitemap index; anak-anaknya
- * /sitemap-static.xml (rute statis + halaman huruf) dan
- * /sitemap-words/{a..z} (lemma per huruf awal).
+ * /sitemap.xml adalah satu urlset (bukan indeks): rute statis, halaman
+ * huruf yang punya lemma terverifikasi, dan lemma terverifikasi.
  */
 // Ekstensi `.ts` eksplisit: modul ini diimpor langsung oleh test yang jalan
 // di `node --experimental-strip-types`, yang butuh specifier lengkap (ESM).
@@ -15,8 +14,6 @@ import {
   seoLocales,
   type AppLocale,
 } from '../i18n/locales.ts';
-
-export const SITEMAP_LETTERS = 'abcdefghijklmnopqrstuvwxyz'.split('');
 
 export function xmlEscape(value: string): string {
   return value
@@ -32,7 +29,8 @@ export interface SitemapItem {
   bare: string;
   priority: string;
   changefreq: string;
-  lastmod: string;
+  /** YYYY-MM-DD. Kosong = jangan tulis lastmod (tanggal tidak diketahui). */
+  lastmod?: string;
 }
 
 /** Baris xhtml:link hreflang (per locale seoIndex + x-default). */
@@ -66,8 +64,7 @@ export function buildUrlsetXml(appUrl: string, items: SitemapItem[]): string {
       (u) => `  <url>
     <loc>${xmlEscape(u.loc)}</loc>
 ${xhtmlAlternates(appUrl, u.bare)}
-    <lastmod>${u.lastmod}</lastmod>
-    <changefreq>${u.changefreq}</changefreq>
+${u.lastmod ? `    <lastmod>${xmlEscape(u.lastmod)}</lastmod>\n` : ''}    <changefreq>${u.changefreq}</changefreq>
     <priority>${u.priority}</priority>
   </url>`,
     )
@@ -78,21 +75,4 @@ ${xhtmlAlternates(appUrl, u.bare)}
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${urls}
 </urlset>`;
-}
-
-/** sitemap index: rute statis + satu anak per huruf a-z. */
-export function buildSitemapIndexXml(appUrl: string): string {
-  const children = [
-    '/sitemap-static.xml',
-    ...SITEMAP_LETTERS.map((l) => `/sitemap-words/${l}`),
-  ]
-    .map((path) => `  <sitemap>
-    <loc>${xmlEscape(`${appUrl}${path}`)}</loc>
-  </sitemap>`)
-    .join('\n');
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${children}
-</sitemapindex>`;
 }

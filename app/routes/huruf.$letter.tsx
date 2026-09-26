@@ -46,7 +46,7 @@ export function meta({ data, params }: Route.MetaArgs) {
           {
             'script:ld+json': buildLetterJsonLd(
               data.letter,
-              data.items ?? [],
+              (data.items ?? []).filter((word) => word.is_verified),
               locale,
             ),
           },

@@ -125,15 +125,41 @@ async function renderAndCache(
   return response;
 }
 
+const HTTPS_ONLY_HOSTS = new Set([
+  'sambasku.com',
+  'www.sambasku.com',
+  'sambasku-web-staging.iamutaki.com',
+]);
+
+function httpsOnlyHost(hostname: string): boolean {
+  return HTTPS_ONLY_HOSTS.has(hostname);
+}
+
+/** Skema yang dilihat pengunjung. Worker Cloudflare menerima URL sebagai https. */
+function inboundHttp(request: Request): boolean {
+  const visitor = request.headers.get('CF-Visitor');
+  if (visitor) {
+    try {
+      const parsed = JSON.parse(visitor) as { scheme?: string };
+      return parsed.scheme === 'http';
+    } catch {
+      return false;
+    }
+  }
+  return new URL(request.url).protocol === 'http:';
+}
+
 export default {
   async fetch(request, env: EdgeEnv, ctx): Promise<Response> {
     const { method } = request;
     const url = new URL(request.url);
     const { pathname } = url;
 
-    // www hanya Custom Domain alias; apex kanonikal (pentest W-11).
-    if (url.hostname === 'www.sambasku.com') {
-      url.hostname = 'sambasku.com';
+    // www hanya alias; apex kanonikal (pentest W-11).
+    // Di Cloudflare, request.url selalu https. Skema klien ada di CF-Visitor.
+    if (url.hostname === 'www.sambasku.com' || (inboundHttp(request) && httpsOnlyHost(url.hostname))) {
+      url.protocol = 'https:';
+      if (url.hostname === 'www.sambasku.com') url.hostname = 'sambasku.com';
       return Response.redirect(url.toString(), 301);
     }
 

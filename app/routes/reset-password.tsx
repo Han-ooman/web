@@ -20,6 +20,9 @@ export function meta() {
     title: 'Atur password baru',
     description: 'Reset password akun SambasKu dengan kode atau tautan dari email.',
     path: '/reset-password',
+    // Deeplink, bukan halaman kamus. Tanpa noindex, hreflang menunjuk
+    // /{locale}/reset-password yang 404.
+    noindexAlways: true,
   });
 }
 
@@ -100,7 +103,7 @@ export default function ResetPasswordPage() {
     <Container size="xs" py={48}>
       <Card withBorder padding="lg" radius="md" shadow="none">
         <Stack gap="xs" mb="md">
-          <Title order={3}>
+          <Title order={1} size="h3">
             {done ? 'Password berhasil direset' : 'Atur password baru'}
           </Title>
           <Text size="sm" c="dimmed">

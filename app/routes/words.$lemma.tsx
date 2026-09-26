@@ -78,6 +78,7 @@ export function meta({ data, params }: Route.MetaArgs) {
     image: primaryImage,
     type: 'article',
     locale,
+    noindexAlways: !word.is_verified,
   });
 }
 
@@ -169,7 +170,7 @@ export default function WordDetailPage() {
       {/* Inject Schema.org JSON-LD untuk search engine - HANYA produksi
           (staging noindex). ponytail: escape "<" mencegah tag </script>
           nyelinap dari data API. */}
-      {env.isProd && (
+      {env.isProd && word.is_verified && (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

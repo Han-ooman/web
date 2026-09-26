@@ -60,6 +60,12 @@ export const links: Route.LinksFunction = () => [
     title: 'SambasKu RSS',
     href: '/rss.xml',
   },
+  {
+    rel: 'alternate',
+    type: 'text/plain',
+    title: 'llms.txt',
+    href: '/llms.txt',
+  },
   { rel: 'manifest', href: '/manifest.webmanifest' },
 ];
 

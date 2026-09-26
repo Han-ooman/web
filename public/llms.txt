@@ -3,7 +3,7 @@
 
 ## Utama
 - [Beranda](https://sambasku.com/id): pencarian kamus, Kata Hari Ini, jelajah alfabetis
-- [Daftar Kata A-Z](https://sambasku.com/id/words): katalog kosakata terverifikasi
+- [Daftar Kata A-Z](https://sambasku.com/id/words): katalog kosakata yang tayang
 - [Halaman per huruf](https://sambasku.com/id/huruf/a): daftar kata berawalan huruf tertentu (a sampai z)
 - [FAQ](https://sambasku.com/id/faq): tentang SambasKu dan pelestarian bahasa Sambas
 - [Bantuan Terjemahan](https://sambasku.com/id/bantuan-terjemahan): tanya jawab terjemahan bahasa Sambas oleh komunitas
@@ -11,7 +11,7 @@
 
 ## Data
 - [RSS kata terbaru](https://sambasku.com/rss.xml): 20 kata yang baru disetujui
-- [Sitemap](https://sambasku.com/sitemap.xml): indeks seluruh halaman
+- [Sitemap](https://sambasku.com/sitemap.xml): daftar halaman yang boleh diindeks (satu urlset, lemma terverifikasi)
 
 ## Kutipan konten
 Konten kata (lemma, makna, terjemahan, contoh) bebas dikutip dengan tautan ke halaman katanya. Bahasa antarmuka: Bahasa Indonesia (`/id/...`) dan Bahasa Sambas (`/id-SBS/...`).
